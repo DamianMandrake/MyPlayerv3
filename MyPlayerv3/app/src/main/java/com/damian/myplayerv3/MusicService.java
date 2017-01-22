@@ -17,6 +17,7 @@ package com.damian.myplayerv3;
 
         import java.io.IOException;
         import java.util.ArrayList;
+        import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Created by Damian on 12/30/2016.
@@ -31,7 +32,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     static int repeatState=0;//0 is normal,1 is repeat once,2 is repeat infinitely
     private boolean playCount;
     static boolean isMediaPlayerPrepared=false;//true in onPrepared and false in onCompleted or in all other cases....
-
+    static boolean isShuffleOn=false;
 
     //might have to implement parcelable to write the current state in a bundle
     //Parcelable
@@ -126,8 +127,9 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     }
 
     public void playNext(){
-        if(repeatState==PLAY_NORMALLY)
-        songPosition= (songPosition+1)%songsList.size();
+
+         if(repeatState==PLAY_NORMALLY )
+        songPosition= isShuffleOn?ThreadLocalRandom.current().nextInt(0,songsList.size()):(songPosition+1)%songsList.size();
         else if(repeatState==REPEAT_ONCE && !playCount){
             playCount=!playCount;
 
@@ -136,6 +138,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
             playNext();
             repeatState=REPEAT_ONCE;
         }
+
         playSong();
 
     }

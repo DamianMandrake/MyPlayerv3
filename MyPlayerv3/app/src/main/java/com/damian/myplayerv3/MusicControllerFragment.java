@@ -48,7 +48,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
                             Sol: 1.store val of songPosition on preferences and reload it ONLY WHEN musicService ISNT PLAYING since MainActivity handles this when its playing...
                             ... prolly call saveSong whenever pause is pressed? or whenever activity itself is destroyed so in activity onPause()
 
-        issue #2-> once the app is quit this fragment must point to the last played song and on click of play must play the song
+        issue #2-> once the app is quit this fragment must point to the song and on click of play must play the song
 
 
     */
@@ -59,7 +59,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
     private ToggleButton playPause,smallPlayPause;
     private SeekBar seekBar;
     private Handler handler;
-    private Button b;
+    private Button b,shuffle;
     private boolean isInTouch=false;public boolean hasSavedStateBeenCalled=false;
     private Song song;
     int progress;
@@ -177,7 +177,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
         endTime=(TextView)view.findViewById(R.id.endTime);
 
 
-
+        shuffle=(Button)view.findViewById(R.id.shuffle);
 
 
 
@@ -195,7 +195,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
         next.setOnClickListener(this);
         prev.setOnClickListener(this);
         b.setOnClickListener(this);
-
+        shuffle.setOnClickListener(this);
 
 
 
@@ -291,6 +291,15 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
                 MusicService.repeatState=(MusicService.repeatState+1)%3;
                 setRepeatButton();
                 return;
+
+            case R.id.shuffle:
+                MusicService.isShuffleOn=!MusicService.isShuffleOn;
+                String x="Shuffle is Off";
+                if(MusicService.isShuffleOn)
+                    x="Shuffle is on";
+                Toast.makeText(getContext(),x,Toast.LENGTH_LONG).show();
+
+                //return;//not need since its the last one
 
 
 
