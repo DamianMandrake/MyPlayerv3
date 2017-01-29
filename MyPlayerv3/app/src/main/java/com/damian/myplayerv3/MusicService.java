@@ -151,8 +151,10 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
 
     public void playPrevious(){
 
-        if(repeatState==PLAY_NORMALLY)
-        songPosition = songPosition ==0 ? songsList.size()-1:songPosition-1;
+        if(repeatState==PLAY_NORMALLY) {
+            songPosition = songPosition == 0 ? songsList.size() - 1 : songPosition - 1;
+            songPosition =isShuffleOn?ThreadLocalRandom.current().nextInt(0,songsList.size()):songPosition;
+        }
 
         playSong();
     }

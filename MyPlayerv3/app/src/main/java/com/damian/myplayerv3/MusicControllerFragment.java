@@ -53,7 +53,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
 
     */
 
-    private TextView smallSongTitle,artist,songName,progressTime,endTime;
+    private TextView smallSongTitle,artist,progressTime,endTime;
     private ImageView smallAlbumArt,imageAlbumArt;
     private ImageButton prev,next;
     private ToggleButton playPause,smallPlayPause;
@@ -75,7 +75,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
         this.song=s;
 
         smallSongTitle.setText(s.getTitle());
-        songName.setText(s.getTitle());
+        //songName.setText(s.getTitle());
         System.out.println("artist is  " + artist == null);
         artist.setText(s.getArtist());
 
@@ -117,6 +117,12 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        try{
+
+
+        }catch (NullPointerException nppe){
+            nppe.printStackTrace();
+        }
 
     }
     public void setSeekBarMax(int max){
@@ -164,7 +170,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
         handler=new Handler();
 
         smallSongTitle=(TextView)view.findViewById(R.id.smallSongTitle);
-        songName=(TextView)view.findViewById(R.id.songName);
+        //songName=(TextView)view.findViewById(R.id.songName);
         artist=(TextView)view.findViewById(R.id.artist);
         b=(Button)view.findViewById(R.id.repeater);
 
@@ -172,6 +178,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
         smallPlayPause=(ToggleButton)view.findViewById(R.id.smallPlayPlause);
         smallAlbumArt=(ImageView)view.findViewById(R.id.smallAlbumArt);
         imageAlbumArt=(ImageView)view.findViewById(R.id.imageAlbumArt);
+        imageAlbumArt.setScaleType(ImageView.ScaleType.FIT_XY);
 
         progressTime=(TextView)view.findViewById(R.id.currentTime);
         endTime=(TextView)view.findViewById(R.id.endTime);
@@ -270,7 +277,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
     @Override
     public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
         System.out.println("onCheckedChanged called");
-        handleButtons(b,true);
+        handleButtons(b, true);
 
 
     }
@@ -314,24 +321,35 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
         saveLastSong();
     }
 
-    public void saveLastSong(){
+    private void saveLastSong(){
 
             SharedPreferences sharedPreferences = getActivity().getPreferences(Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPreferences.edit();
+            save(editor);
             editor.clear();
+
+            //for gc
+            sharedPreferences=null;
+            editor=null;
             //System.out.println("SONG BEING SAVED IS " + song.toString());
-            editor.putInt(CURR_SONG_POS_REF,musicService.getSongPosition());//since ive put songPos i can call setSongPos and call play
-            editor.putInt(REPEAT_BUTTON_STATUS, MusicService.repeatState);
-            editor.putBoolean(HAS_SAVE_BEEN_CALLED, true);
-            editor.putInt(SEEKBAR_POS,progress);
-
-
-            editor.putInt("seekbarMax",seekBar.getMax());
-            editor.commit();
 
 
 
 
+
+    }
+    public void save(SharedPreferences.Editor editor){
+
+        editor.putInt(CURR_SONG_POS_REF,musicService.getSongPosition());//since ive put songPos i can call setSongPos and call play
+        editor.putInt(REPEAT_BUTTON_STATUS, MusicService.repeatState);
+        editor.putBoolean(HAS_SAVE_BEEN_CALLED, true);
+        editor.putInt(SEEKBAR_POS,progress);
+
+        //TBD shuffle state
+
+
+        editor.putInt("seekbarMax",seekBar.getMax());
+        editor.commit();
     }
 
     private void loadLastSong(){

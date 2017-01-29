@@ -21,6 +21,7 @@ public class AllSongsFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         View view=inflater.inflate(R.layout.frag_main,container,false);
+        ((MainActivity)getActivity()).myAppBar.setText("All Songs");
         recyclerView=(RecyclerView)view.findViewById(R.id.songRecycler);
         if(backTask!=null)backTask.setRecyclerView(recyclerView);
         return view;

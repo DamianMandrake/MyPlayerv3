@@ -28,6 +28,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
 
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -45,7 +46,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
 
     public ProgressDialog progressDialog;
-
+    public TextView myAppBar;
 
     private MusicService musicService;
     private Intent musicPlayerIntent;
@@ -127,6 +128,8 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
         System.out.println("setting layout");
         setContentView(R.layout.activity_main);
+        myAppBar=(TextView)findViewById(R.id.appBarTextView);
+        myAppBar.setText(R.string.app_name);
 
 
         try{
@@ -200,6 +203,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         SharedPreferences sharedPreferences=getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor editor=sharedPreferences.edit();
         editor.putBoolean(IS_IN_ON_DESTROY,true);
+        musicControllerFragment.save(editor);
 
 
         editor.commit();
@@ -387,8 +391,10 @@ interface MainActivityConstants{
     static final String REQUIRE_PERMS="require permissions for proper functioning";
     static final String externalStoragePath = (Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)).getAbsolutePath();
     static final File externalParentDir=new File(externalStoragePath);
-    static final int MAX_TRANSLATION=1300;
+    static final int MAX_TRANSLATION=1465;
 
     static final String IS_IN_ON_DESTROY="isInOnDestroy";
+
+    //MORE TRANSLATIONY VALUE IN XML = LESSER SPACE OCCUPIED
 
 }
