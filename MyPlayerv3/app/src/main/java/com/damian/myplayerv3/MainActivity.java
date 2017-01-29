@@ -11,6 +11,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 
+import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
 import android.os.PersistableBundle;
@@ -21,6 +22,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
+import android.util.DisplayMetrics;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -37,6 +39,12 @@ import java.io.File;
 
 public class MainActivity extends AppCompatActivity implements MainActivityConstants {
 
+
+    static int MAX_TRANSLATION;
+
+    public void setMaxTranslation(int x) {
+        MAX_TRANSLATION=x;
+    }
 
     private Button b;
     boolean resumeApp=false;
@@ -59,6 +67,8 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
     private float previousY,trans,diff;
 
 
+
+
     private ServiceConnection musicConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -74,10 +84,13 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
                 Song s=musicService.getCurrentlyPlayingSong();//happens only if musicService is running ie most times... have to check it out
                 if(s!=null) {
                     System.out.println("setting song to curr");
+
                     musicControllerFragment.setCurrentSong(s);
                     int maxDur=musicService.getDuration();
                     musicControllerFragment.setSeekBarMax(maxDur);
                     musicControllerFragment.setMaxDuration(maxDur);
+
+
                     musicControllerFragment.setMusicService(musicService);
 
 
@@ -128,8 +141,13 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
         System.out.println("setting layout");
         setContentView(R.layout.activity_main);
+        int p=this.getResources().getDisplayMetrics().heightPixels;
+        setMaxTranslation(p-(int)(p*TRANSLATION_THRESHOLD_PERCENTAGE));
         myAppBar=(TextView)findViewById(R.id.appBarTextView);
         myAppBar.setText(R.string.app_name);
+
+
+
 
 
         try{
@@ -259,10 +277,14 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
                     case MotionEvent.ACTION_UP:
 
-                        if (diff < 0)
+                        if (diff < 0) {
                             view.setTranslationY(MAX_TRANSLATION);
-                        else if (diff > 0)
+                            musicControllerFragment.smallPlayPause.setVisibility(View.VISIBLE);
+                        }
+                        else if (diff > 0) {
                             view.setTranslationY(0);
+                            musicControllerFragment.smallPlayPause.setVisibility(View.INVISIBLE);
+                        }
 
 
                         return true;
@@ -318,8 +340,14 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
     public void askPerms(View v){
         //has to be public so that the xml code can access it
         System.out.println("about to ask for perm");
-        if(shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE))
+        if(Build.VERSION.SDK_INT> Build.VERSION_CODES.LOLLIPOP_MR1) {
+            if (shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                //code for a dialog explaining why i need those permissions
+            }
+        }else
             toast(REQUIRE_PERMS);
+
+
         System.out.println("about to get into activity compat");
         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_READ_EXTERNAL);
 
@@ -392,8 +420,8 @@ interface MainActivityConstants{
     static final String REQUIRE_PERMS="require permissions for proper functioning";
     static final String externalStoragePath = (Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)).getAbsolutePath();
     static final File externalParentDir=new File(externalStoragePath);
-    static final int MAX_TRANSLATION=1465;
 
+    static float TRANSLATION_THRESHOLD_PERCENTAGE=0.175f;
     static final String IS_IN_ON_DESTROY="isInOnDestroy";
 
     //MORE TRANSLATIONY VALUE IN XML = LESSER SPACE OCCUPIED

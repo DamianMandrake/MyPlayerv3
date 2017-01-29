@@ -56,7 +56,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
     private TextView smallSongTitle,artist,progressTime,endTime;
     private ImageView smallAlbumArt,imageAlbumArt;
     private ImageButton prev,next;
-    private ToggleButton playPause,smallPlayPause;
+    private ToggleButton playPause;public ToggleButton smallPlayPause;
     private SeekBar seekBar;
     private Handler handler;
     private Button b,shuffle;
@@ -250,7 +250,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
 
     }
 
-    private void handleButtons(boolean b,boolean shouldItDoAnything){
+    public void handleButtons(boolean b,boolean shouldItDoAnything){
         System.out.println("************************** value of handle buttons is " + b);
         if(b) {
             playPause.setBackgroundResource(R.mipmap.play);
@@ -287,10 +287,14 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
         switch (view.getId()){
             case R.id.prev:
                 musicService.onTouchPrev();
+                if(playPause.isChecked())
+                    handleButtons(false,false);
 
                 return;
 
             case R.id.nextSong:
+                if(playPause.isChecked())//when music is paused and the next song is tapped the button state needs to be maintained
+                    handleButtons(false,false);
                 musicService.onTouchNext();
                 return;
 

@@ -192,6 +192,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
         repeatState=PLAY_NORMALLY;
         playPrevious();
         repeatState=repeatButtonStatus;
+        //when user pauses the current song and clicks on next/prev song ... the state of the button must change
 
     }
 
