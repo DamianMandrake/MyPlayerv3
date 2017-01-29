@@ -202,6 +202,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
     void savePreferences(){
         SharedPreferences sharedPreferences=getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor editor=sharedPreferences.edit();
+        musicService.setmSharedPreferencesEditor(editor);
         editor.putBoolean(IS_IN_ON_DESTROY,true);
         musicControllerFragment.save(editor);
 

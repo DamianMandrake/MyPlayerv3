@@ -13,6 +13,7 @@
         android:layout_height="65dp"
         android:id="@+id/myAppBar"
         android:background="#2c2c2c"
+        android:elevation="10dp"
         >
     <TextView
         android:layout_width="match_parent"
@@ -43,9 +44,9 @@
         android:layout_height="425dp"
         android:id="@+id/musicListFrag"
         android:layout_below="@+id/myAppBar"
-        android:paddingTop="@dimen/activity_vertical_margin"
+
         android:paddingLeft="@dimen/activity_horizontal_margin"
-        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingRight="16dp"
 
 
         />

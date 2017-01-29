@@ -26,25 +26,41 @@
 
 
 
-        <TextView
+
+        <TableLayout
             android:layout_width="220dp"
             android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            >
 
-            android:id="@+id/smallSongTitle"
-            android:textColor="#FFF"
+            <TableRow>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_column="1"
+                    android:id="@+id/smallSongTitle"
+                    android:textColor="#FFF"
+                    android:textSize="15dp"
 
-            android:layout_gravity="center" />
+                    />
+
+
+            </TableRow>
+
+
+            <TableRow>
         <TextView
-            android:layout_marginTop="5dp"
+
             android:layout_width="220dp"
             android:layout_height="wrap_content"
             android:id="@+id/artist"
-            android:layout_gravity="center|bottom"
-            android:text=""
+            android:layout_column="1"
 
             android:textColor="#FFF"
-            android:marqueeRepeatLimit="marquee_forever"
+
             />
+            </TableRow>
+        </TableLayout>
 
         <ToggleButton
             android:layout_width="50dp"

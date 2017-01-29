@@ -4,6 +4,7 @@ package com.damian.myplayerv3;
         import android.app.Service;
         import android.content.ContentUris;
         import android.content.Intent;
+        import android.content.SharedPreferences;
         import android.media.AudioManager;
         import android.media.MediaPlayer;
         import android.net.Uri;
@@ -33,6 +34,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     private boolean playCount;
     static boolean isMediaPlayerPrepared=false;//true in onPrepared and false in onCompleted or in all other cases....
     static boolean isShuffleOn=false;
+    private SharedPreferences.Editor mSharedPreferencesEditor;
 
     //might have to implement parcelable to write the current state in a bundle
     //Parcelable
@@ -48,6 +50,21 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
         initMusicPlayer();
 
     }
+    public void setmSharedPreferencesEditor(SharedPreferences.Editor s){
+        this.mSharedPreferencesEditor=s;
+    }
+    private void save(){
+        this.mSharedPreferencesEditor.clear();
+        this.ref.save(this.mSharedPreferencesEditor);
+    }
+
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        System.out.println("in on destroy of SERVICE");
+    }
+
     public void initMusicPlayer(){
 
         mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);// this lets the service run even when the device is locked
