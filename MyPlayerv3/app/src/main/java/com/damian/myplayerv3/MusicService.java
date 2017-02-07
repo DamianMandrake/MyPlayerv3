@@ -44,6 +44,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     public void onCreate(){
         //whenever you call baseclass lifecycle func... android binds and marks the current class as a service
         super.onCreate();
+        songsList=new ArrayList<>();
 
         songPosition=0;
         mediaPlayer=new MediaPlayer();
@@ -81,7 +82,15 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     }
 
     public boolean isListEmpty(){
-        return songsList.isEmpty();
+
+        try {
+
+            return songsList.isEmpty();
+        }catch (NullPointerException npe){
+            npe.printStackTrace();
+        }finally {
+            return true;
+        }
     }
     public MediaPlayer getMediaPlayer(){return mediaPlayer;}
 
@@ -195,6 +204,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
         //when user pauses the current song and clicks on next/prev song ... the state of the button must change
 
     }
+
 
     public void setRef(MusicControllerFragment m){
         ref=m;

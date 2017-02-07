@@ -33,9 +33,8 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.gson.Gson;
-
 import java.io.File;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements MainActivityConstants {
 
@@ -49,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
     private Button b;
     boolean resumeApp=false;
 
-    private AllSongsFragment allSongsFragment;
+    public AllSongsFragment allSongsFragment;
     public MusicControllerFragment musicControllerFragment;//since this has to be accessed by all other classes in the program
 
 
@@ -58,13 +57,15 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
     private MusicService musicService;
     private Intent musicPlayerIntent;
-    private boolean isPlayerBound=false;
+    static boolean isPlayerBound=false;
     private FrameLayout frameLayout,musicListFrame;
     private android.support.v4.app.FragmentManager fragmentManager;
     private android.support.v4.app.FragmentTransaction fragmentTransaction;
 
     private Class mHolder=MusicService.class;
     private float previousY,trans,diff;
+
+
 
 
 
@@ -77,8 +78,9 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
             MusicService.MusicBinder musicBinder = (MusicService.MusicBinder) service;
             System.out.println(musicBinder.toString()+" music BINDER");
             musicService = musicBinder.getServiceInstance();
+            musicControllerFragment.setMusicService(musicService);
             System.out.println("MUSIC SERVICE HAS VAL " + musicService.toString());
-
+            isPlayerBound = true;
             if(resumeApp && musicService.isPlaying()) {
                 System.out.println("Inside service if");
                 Song s=musicService.getCurrentlyPlayingSong();//happens only if musicService is running ie most times... have to check it out
@@ -95,17 +97,23 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
 
 
+                    //making interface which gets called as soon as this guy gets initialized
+
+
+
+
                 }
             }
             musicService.setRef(musicControllerFragment);
 
 
-            isPlayerBound = true;
+
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             System.out.println("inside onServiceDisconnected");
+            savePreferences();
             isPlayerBound = false;
 
         }

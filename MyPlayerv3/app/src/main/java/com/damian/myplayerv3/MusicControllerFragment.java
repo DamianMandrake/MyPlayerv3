@@ -27,7 +27,6 @@ import android.widget.ToggleButton;
 
 import android.os.Handler;
 
-import com.google.gson.Gson;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -86,9 +85,9 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
 
         //seekBar.setMax(musicService.getDuration());leads to an illegal state since media player hasnt been intited yet
 
-        if(s.getImgPath()!=null) {
+        if(s.getLargeImgPath()!=null) {
             imageAlbumArt.setImageBitmap(BitmapFactory.decodeFile(s.getLargeImgPath()));
-            smallAlbumArt.setImageBitmap(BitmapFactory.decodeFile(s.getImgPath()));
+            smallAlbumArt.setImageBitmap(BitmapFactory.decodeFile(s.getLargeImgPath()));
         }else{
             imageAlbumArt.setImageResource(R.drawable.notfound);
             smallAlbumArt.setImageResource(R.drawable.notfound);
@@ -101,7 +100,8 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
         musicService=a;
 
         //loadLastSong();
-        try{
+        //HAVE TO REWRITE.....
+        /*try{
             loadLastSong();
 
 
@@ -109,7 +109,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
             System.out.println("IN setMusicService of NPE OF  FRAGMENT");
             npe.printStackTrace();
             hasSavedStateBeenCalled=false;
-        }
+        }*/
 
 
     }
@@ -322,7 +322,12 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
     public void onPause() {
         super.onPause();
         System.out.println("in onpause");
-        saveLastSong();
+        try {
+            saveLastSong();
+
+        }catch(NullPointerException npe){
+            System.out.println("ONPAUSE OF MUSIC CONTROLLER FRAGMENT CAAUSE NPE ");
+        }
     }
 
     private void saveLastSong(){
@@ -411,9 +416,13 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
     //Overriding the callback i wrote in the SongRecycler class... everytime onClick is generated in SongRecycler this callback will be called
     @Override
     public void play(int p){
+        System.out.println("music service is null "+musicService==null);
+        if(musicService!=null) {
+
         musicService.setSongPosition(p);
         musicService.playSong();
-        handleButtons(false,false);
+        handleButtons(false, false);
+    }
 
     }
 

@@ -54,7 +54,7 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
 
         final Song currSong=songList.get(position);
         System.out.println("binding "+currSong.getTitle());
-        if(currSong.getImgPath()!=null) {
+        if(currSong.getLargeImgPath()!=null) {
             holder.setCurrSong(position);
             System.out.println("imgPath of " + currSong.getTitle() + " IS " + currSong.getImgPath());
 
@@ -68,7 +68,7 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
                 @Override
                 protected Bitmap doInBackground(RecyclerView.ViewHolder... viewHolders) {
                     v=viewHolders[0];
-                    return BitmapFactory.decodeFile(((SongViewHolder)v).getCurrSongImgPath());
+                    return BitmapFactory.decodeFile(((SongViewHolder)v).getCurrSongImgPath());//since inner cant access outer
 
 
 
@@ -151,7 +151,7 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
             this.p=p;
         }
         String getCurrSongImgPath(){
-            return tempSong.get(p).getImgPath();
+            return tempSong.get(p).getLargeImgPath();
         }
 
 

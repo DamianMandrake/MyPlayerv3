@@ -24,9 +24,9 @@ public class Song  implements Serializable{
         imgPath=null;
 
     }
-    public Song(long x, String t, String p, String a,String l){
+    public Song(long x, String t, String p,String l){
         this(x,t,p);
-        imgPath=a;
+        //imgPath=a;
         largeImgPath=l;
     }
 

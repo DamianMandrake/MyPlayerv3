@@ -29,11 +29,13 @@ public class AllSongsFragment extends Fragment {
 
     public void setBackTaskAndExecute(MainActivity a){
         backTask=new SongListCompressBackTask(a);
+        //backTask.setIniter((MainActivity)getActivity());
         backTask.execute();
         backTask.setMusicService(a.getMusicService());
 
 
     }
+    public SongListCompressBackTask getBackTask(){return backTask;}
 
 
 

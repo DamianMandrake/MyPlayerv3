@@ -8,6 +8,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -34,12 +35,44 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
     private SongRecycler recyclerAdapter;
     private MusicService holder;
     private MainActivity activity;
+    private Handler handler;
+
+
+
+    private Runnable run=new Runnable(){
+      public void run(){
+          System.out.println("in hanlder");
+          System.out.println("value of inFetch is "+inFetch+" VALUE OF isPlayerBound is "+MainActivity.isPlayerBound);
+            if(!inFetch && MainActivity.isPlayerBound){
+                System.out.println("initializing songList of musicService");
+                activity.getMusicService().setSongsList(songList);
+                System.out.println("removing callback");
+                handler.removeCallbacks(this);
+                return;
+
+            }
+          handler.postDelayed(this,100);
+
+        }
+    };
+
+
+    static boolean inFetch=false;
+
+
+
+
+
     SongListCompressBackTask(MainActivity a){
         songList=new ArrayList<Song>();
         activity=a;
         musicResolver=a.getContentResolver();
         context=a.getApplicationContext();
         holder=null;
+
+        handler=new Handler();
+        handler.postDelayed(run,100);
+
 
         recyclerAdapter=null;
 
@@ -48,6 +81,7 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
     }
     public void setMusicService(MusicService m){
         holder=m;
+
     }
 
     public void setRecyclerView(RecyclerView recyclerView){this.recyclerView=recyclerView;}
@@ -62,8 +96,11 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
     }
 
     @Override
-    protected Void doInBackground(Void... voids) {//worker thread
+    protected Void doInBackground(Void... voids) {
+        inFetch=true;
+    //worker thread
         findSongs();
+
 
 
         return null;
@@ -72,6 +109,7 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
 
     @Override
     protected void onPostExecute(Void aVoid) {//spawns a ui thread from ui thread
+        inFetch=false;
         handleRecyclerView();
 
         activity.progressDialog.hide();
@@ -84,7 +122,7 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
         super.onProgressUpdate(values);
     }
 
-    public ArrayList getSongList(){return songList;}
+    public ArrayList<Song> getSongList(){return songList;}
 
 
     private void findSongs(){
@@ -98,6 +136,7 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
             int idCol= musicCursor.getColumnIndex(MediaStore.Audio.Media._ID);
             int artistCol=musicCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
             int albumId=musicCursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ID);
+            int albumName=musicCursor.getColumnIndex(MediaStore.Audio.AlbumColumns.ALBUM);
            // int year=musicCursor.getColumnIndex(MediaStore.Audio.Albums.FIRST_YEAR);
             Cursor albumArtCursor;
             do{
@@ -105,20 +144,24 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
                 //System.out.println("year is "+y);
                 String t=musicCursor.getString(titleCol),a=musicCursor.getString(artistCol),ba=musicCursor.getString(albumId);
 
+                String alName=musicCursor.getString(albumName);
+
                 albumArtCursor=musicResolver.query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
                         new String[]{MediaStore.Audio.Albums._ID,MediaStore.Audio.Albums.ALBUM_ART},
                         MediaStore.Audio.Albums._ID +"=?",new String[]{ba},null);
 
 
-                String path=null,tp=null;
+                String path=null;
                 if(albumArtCursor.moveToFirst()){
                     path=albumArtCursor.getString(albumArtCursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART));
-                    tp=path;
-                    if(path!=null)
-                        path=compressAndGetFilePath(path,ba);
+                    System.out.println("ALBUM NAME IS "+alName);
+                   /* if(path!=null) {
+                        System.out.println("value of path is "+path);
+                        path = compressAndGetFilePath(path, ba);
+                    }*/
                 }
 
-                songList.add(new Song(tempId, t, a, path,tp));
+                songList.add(new Song(tempId, t, a, path));
 
 
 
@@ -201,14 +244,14 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
 
 
         recyclerAdapter=new SongRecycler(context,songList);
-        holder=activity.getMusicService();
-        holder.setSongsList(songList);
-        activity.musicControllerFragment.setMusicService(holder);
+
+        //activity.musicControllerFragment.setMusicService(holder);
 
                     recyclerAdapter.setPlaySongReference(activity.musicControllerFragment);
-                    activity.musicControllerFragment.setMusicService(holder);
+                   // activity.musicControllerFragment.setMusicService(holder);
 
             recyclerView.setAdapter(recyclerAdapter);
+
 
 
         System.out.println("setadapter to recyclerView ");
