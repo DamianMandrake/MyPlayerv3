@@ -4,6 +4,7 @@ package com.damian.myplayerv3;
         import android.app.Service;
         import android.content.ContentUris;
         import android.content.Intent;
+        import android.content.ServiceConnection;
         import android.content.SharedPreferences;
         import android.media.AudioManager;
         import android.media.MediaPlayer;
@@ -54,16 +55,19 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     public void setmSharedPreferencesEditor(SharedPreferences.Editor s){
         this.mSharedPreferencesEditor=s;
     }
-    private void save(){
-        this.mSharedPreferencesEditor.clear();
-        this.ref.save(this.mSharedPreferencesEditor);
-    }
+
 
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         System.out.println("in on destroy of SERVICE");
+    }
+
+    @Override
+    public void unbindService(ServiceConnection conn) {
+        super.unbindService(conn);
+
     }
 
     public void initMusicPlayer(){

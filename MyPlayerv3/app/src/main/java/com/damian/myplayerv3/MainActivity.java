@@ -40,13 +40,21 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
 
     static int MAX_TRANSLATION;
+    private static Context context;
+    static File STORAGE_DIR;
+    public void setStorageDir(File f){
+        STORAGE_DIR=f;
+
+    }
+
+    public static Context getContext(){return context;}
 
     public void setMaxTranslation(int x) {
         MAX_TRANSLATION=x;
     }
 
     private Button b;
-    boolean resumeApp=false;
+    static boolean resumeApp=false;
 
     public AllSongsFragment allSongsFragment;
     public MusicControllerFragment musicControllerFragment;//since this has to be accessed by all other classes in the program
@@ -65,6 +73,9 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
     private Class mHolder=MusicService.class;
     private float previousY,trans,diff;
 
+    public static ArrayList<Song> songList=new ArrayList<>();
+
+
 
 
 
@@ -79,13 +90,18 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
             System.out.println(musicBinder.toString()+" music BINDER");
             musicService = musicBinder.getServiceInstance();
             musicControllerFragment.setMusicService(musicService);
+            if(resumeApp)
+                musicService.setSongsList(songList);
             System.out.println("MUSIC SERVICE HAS VAL " + musicService.toString());
             isPlayerBound = true;
+
             if(resumeApp && musicService.isPlaying()) {
                 System.out.println("Inside service if");
                 Song s=musicService.getCurrentlyPlayingSong();//happens only if musicService is running ie most times... have to check it out
                 if(s!=null) {
                     System.out.println("setting song to curr");
+
+                    musicControllerFragment.setMusicService(musicService);
 
                     musicControllerFragment.setCurrentSong(s);
                     int maxDur=musicService.getDuration();
@@ -93,7 +109,6 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
                     musicControllerFragment.setMaxDuration(maxDur);
 
 
-                    musicControllerFragment.setMusicService(musicService);
 
 
 
@@ -149,8 +164,10 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
         System.out.println("setting layout");
         setContentView(R.layout.activity_main);
+        context=getApplicationContext();
         int p=this.getResources().getDisplayMetrics().heightPixels;
-        setMaxTranslation(p-(int)(p*TRANSLATION_THRESHOLD_PERCENTAGE));
+        setMaxTranslation(p - (int) (p * TRANSLATION_THRESHOLD_PERCENTAGE));
+        setStorageDir(getApplicationContext().getCacheDir());
         myAppBar=(TextView)findViewById(R.id.appBarTextView);
         myAppBar.setText(R.string.app_name);
 
@@ -164,12 +181,22 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
         }catch (NullPointerException npe){
             System.out.println("App started without call to onDestroy previously");
+
         }
 
+        allSongsFragment = new AllSongsFragment();
+        musicControllerFragment = new MusicControllerFragment();
 
+                System.out.println("VALUE OF resumeApp is "+resumeApp);
+        if(resumeApp){
+            StoreList storeList=new StoreList(MusicControllerFragmentConstants.SONG_LIST);
+            songList=storeList.readArrayList();
+            System.out.println("arraylist is "+songList.size());
 
-                allSongsFragment = new AllSongsFragment();
-                musicControllerFragment = new MusicControllerFragment();
+            allSongsFragment.initRecycler(songList);
+            System.out.println("arraylist is "+songList.size());
+        }
+
 
 
         frameLayout=(FrameLayout)findViewById(R.id.musicControllerFragPlaceholder);
@@ -181,6 +208,8 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         progressDialog=new ProgressDialog(this);
         progressDialog.setCancelable(false);
         progressDialog.setInverseBackgroundForced(false);
+
+        progressDialog.setMessage("Initializing MusicPlayer");
 
 
 
@@ -201,7 +230,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
             if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
                 System.out.println(" permissions had been granted before about to start async");
                 b.setVisibility(View.INVISIBLE);
-
+                if(!resumeApp)
                 allSongsFragment.setBackTaskAndExecute(this);
                 setFramesVisible();
                 initBotFrag();
@@ -226,20 +255,27 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
     }
 
     void savePreferences(){
-        SharedPreferences sharedPreferences=getPreferences(MODE_PRIVATE);
+        System.out.println("inside savepreferences of mainActivity");
+        SharedPreferences sharedPreferences=getSharedPreferences("myPref", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor=sharedPreferences.edit();
         musicService.setmSharedPreferencesEditor(editor);
-        editor.putBoolean(IS_IN_ON_DESTROY,true);
+
+        resumeApp=true;
+        editor.putBoolean(IS_IN_ON_DESTROY, resumeApp);
+        editor.apply();
+        System.out.println("get boolean" + sharedPreferences.getBoolean(IS_IN_ON_DESTROY, false));
+
         musicControllerFragment.save(editor);
 
 
-        editor.commit();
     }
 
 
     void loadPreferences(){
-        SharedPreferences sharedPreferences=getPreferences(MODE_PRIVATE);
-        resumeApp=(Boolean)sharedPreferences.getAll().get(IS_IN_ON_DESTROY);
+        SharedPreferences sharedPreferences=getSharedPreferences("myPref",Context.MODE_PRIVATE);
+        System.out.println("value of resumeApp is " + resumeApp);
+        resumeApp=sharedPreferences.getBoolean(IS_IN_ON_DESTROY,false);
+
     }
 
 
@@ -288,8 +324,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
                         if (diff < 0) {
                             view.setTranslationY(MAX_TRANSLATION);
                             musicControllerFragment.smallPlayPause.setVisibility(View.VISIBLE);
-                        }
-                        else if (diff > 0) {
+                        } else if (diff > 0) {
                             view.setTranslationY(0);
                             musicControllerFragment.smallPlayPause.setVisibility(View.INVISIBLE);
                         }
@@ -333,7 +368,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
             if(musicPlayerIntent!=null&&isPlayerBound){
                 unbindService(musicConnection);
             }
-            deleteCompressedImages();onDestroy();
+            onDestroy();
             return true;
         }
 
@@ -387,8 +422,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
                     initBotFrag();
                     initOtherFrag(allSongsFragment);
                     setFramesVisible();
-                    /*backTask=new SongListCompressBackTask(this,recyclerView);   //make backtask obj in fragment and excute...
-                    */
+
                 }
                 return;
 
@@ -397,25 +431,23 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
         }
     }
+
     @Override
     protected void onDestroy(){
         super.onDestroy();
         savePreferences();
+        new Thread(new Runnable(){
+            public void run(){
+                StoreList storeList=new StoreList(MainActivity.songList,MusicControllerFragment.SONG_LIST);
+                storeList.writeArrayList();
+            }
+        }).start();
+
+
         //musicControllerFragment.saveLastSong();wont work as fragments are removed before activity
 
     }
 
-    private void deleteCompressedImages() {
-
-        File[] f = externalParentDir.listFiles();
-        if (f != null)
-            for (File x : f) {
-                System.out.println("deleting " + x.getName());
-                System.out.println(x.delete());
-            }
-        System.out.println("in on destroy prolly deleted files/folders");
-
-    }
 
 
 
@@ -426,8 +458,11 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 interface MainActivityConstants{
     static final int MY_READ_EXTERNAL=4;
     static final String REQUIRE_PERMS="require permissions for proper functioning";
-    static final String externalStoragePath = (Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)).getAbsolutePath();
+    /*static final String externalStoragePath = (Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)).getAbsolutePath();
     static final File externalParentDir=new File(externalStoragePath);
+    */
+
+
 
     static float TRANSLATION_THRESHOLD_PERCENTAGE=0.175f;
     static final String IS_IN_ON_DESTROY="isInOnDestroy";

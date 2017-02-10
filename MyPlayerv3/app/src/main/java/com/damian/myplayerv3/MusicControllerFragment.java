@@ -10,6 +10,7 @@ import android.media.Image;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Looper;
+import android.support.annotation.MainThread;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
@@ -31,6 +32,8 @@ import android.os.Handler;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -62,6 +65,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
     private boolean isInTouch=false;public boolean hasSavedStateBeenCalled=false;
     private Song song;
     int progress;
+
 
 
 
@@ -128,6 +132,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
     public void setSeekBarMax(int max){
         seekBar.setMax(max);
 
+        if(musicService.isPlaying())
         updateSeekbar();
         //also setting the handler for the seekbar updations
 
@@ -334,9 +339,9 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
 
             SharedPreferences sharedPreferences = getActivity().getPreferences(Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPreferences.edit();
-            save(editor);
-            editor.clear();
 
+            //editor.clear();
+            save(editor);
             //for gc
             sharedPreferences=null;
             editor=null;
@@ -349,17 +354,26 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
     }
     public void save(SharedPreferences.Editor editor){
 
-        editor.putInt(CURR_SONG_POS_REF,musicService.getSongPosition());//since ive put songPos i can call setSongPos and call play
+        editor.putInt(CURR_SONG_POS_REF, musicService.getSongPosition());//since ive put songPos i can call setSongPos and call play
         editor.putInt(REPEAT_BUTTON_STATUS, MusicService.repeatState);
         editor.putBoolean(HAS_SAVE_BEEN_CALLED, true);
-        editor.putInt(SEEKBAR_POS,progress);
-
-        //TBD shuffle state
+        editor.putInt(SEEKBAR_POS, progress);
 
 
-        editor.putInt("seekbarMax",seekBar.getMax());
+
+        //TBD save songList state
+
+
+        editor.putInt("seekbarMax", seekBar.getMax());
         editor.commit();
+
+
+
+
     }
+
+
+
 
     private void loadLastSong(){
         if(!musicService.isPlaying()) {
@@ -367,13 +381,17 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
             Map t=sharedPreferences.getAll();
             hasSavedStateBeenCalled=(Boolean)t.get(HAS_SAVE_BEEN_CALLED);
             musicService.setSongPosition((Integer) t.get(CURR_SONG_POS_REF));
+
             musicService.playSong();
-            progress=(Integer)t.get(SEEKBAR_POS);
+
+
 
             MusicService.repeatState=(Integer)t.get(REPEAT_BUTTON_STATUS);
             int p=(Integer)t.get("seekbarMax");
             setRepeatButton();
             //this will pause the song bydefault
+            progress=(Integer)t.get(SEEKBAR_POS);
+            seekBar.setProgress(progress);
             seekBar.setMax(p);
             handleButtons(false,false);
             //handleButtons(true);//not pausing the song ... since till the time the true part is executed the musicService hasnt really started playing the song...
@@ -435,5 +453,7 @@ interface MusicControllerFragmentConstants{
     final static String HAS_SAVE_BEEN_CALLED="in onSavePreferences";
     final static String REPEAT_BUTTON_STATUS="repeat button status";
     final static String SEEKBAR_POS="seekbar position";
+    final static String SONG_LIST="songlist";
+
 }
 

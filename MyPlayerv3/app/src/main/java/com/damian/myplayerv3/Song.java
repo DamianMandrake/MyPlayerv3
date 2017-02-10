@@ -9,7 +9,7 @@ import java.io.Serializable;
 /**
  * Created by Damian on 12/28/2016.
  */
-public class Song  implements Serializable{
+public class Song implements Serializable{
     private long id;
     private String title,artist;
     private String imgPath;

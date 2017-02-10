@@ -31,9 +31,6 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
     private ArrayList<Song> songList;
     private ContentResolver musicResolver;
     private Context context;
-    private RecyclerView recyclerView;
-    private SongRecycler recyclerAdapter;
-    private MusicService holder;
     private MainActivity activity;
     private Handler handler;
 
@@ -48,6 +45,8 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
                 activity.getMusicService().setSongsList(songList);
                 System.out.println("removing callback");
                 handler.removeCallbacks(this);
+
+                handleRecyclerView();
                 return;
 
             }
@@ -68,23 +67,16 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
         activity=a;
         musicResolver=a.getContentResolver();
         context=a.getApplicationContext();
-        holder=null;
 
         handler=new Handler();
         handler.postDelayed(run,100);
 
 
-        recyclerAdapter=null;
-
 
 
     }
-    public void setMusicService(MusicService m){
-        holder=m;
 
-    }
 
-    public void setRecyclerView(RecyclerView recyclerView){this.recyclerView=recyclerView;}
 
 
     @Override
@@ -100,6 +92,9 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
         inFetch=true;
     //worker thread
         findSongs();
+        if(MainActivity.songList!=null)
+        if(this.songList.size()>MainActivity.songList.size())
+        MainActivity.songList=this.songList;
 
 
 
@@ -174,6 +169,7 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
 
 
     }
+    /*
 
     private String compressAndGetFilePath(String path,String albumId){
 
@@ -237,21 +233,10 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
 
         return p;
     }
-
+    */
     private void handleRecyclerView(){
-        recyclerView.setVisibility(View.VISIBLE);
-        recyclerView.setLayoutManager(new LinearLayoutManager(context));
 
-
-        recyclerAdapter=new SongRecycler(context,songList);
-
-        //activity.musicControllerFragment.setMusicService(holder);
-
-                    recyclerAdapter.setPlaySongReference(activity.musicControllerFragment);
-                   // activity.musicControllerFragment.setMusicService(holder);
-
-            recyclerView.setAdapter(recyclerAdapter);
-
+        activity.allSongsFragment.initRecycler(songList);
 
 
         System.out.println("setadapter to recyclerView ");
