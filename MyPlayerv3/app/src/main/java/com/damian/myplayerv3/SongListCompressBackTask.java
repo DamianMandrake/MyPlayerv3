@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -34,6 +35,7 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
     private MainActivity activity;
     private Handler handler;
 
+    private String notifyChangeInList="";
 
 
     private Runnable run=new Runnable(){
@@ -42,11 +44,11 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
           System.out.println("value of inFetch is "+inFetch+" VALUE OF isPlayerBound is "+MainActivity.isPlayerBound);
             if(!inFetch && MainActivity.isPlayerBound){
                 System.out.println("initializing songList of musicService");
-                activity.getMusicService().setSongsList(songList);
+
+                    activity.getMusicService().setSongsList(SongListCompressBackTask.this.songList);
                 System.out.println("removing callback");
                 handler.removeCallbacks(this);
 
-                handleRecyclerView();
                 return;
 
             }
@@ -69,7 +71,7 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
         context=a.getApplicationContext();
 
         handler=new Handler();
-        handler.postDelayed(run,100);
+        handler.postDelayed(run, 100);
 
 
 
@@ -82,8 +84,10 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
     @Override
     protected void onPreExecute() {//spwans a ui thread from ui thread
         super.onPreExecute();
-        activity.progressDialog.show();
-        activity.progressDialog.setMessage("Fetching songs");
+        if(!MainActivity.resumeApp) {
+            activity.progressDialog.show();
+            activity.progressDialog.setMessage("Fetching songs");
+        }
         System.out.println("in onPreExcecute");
     }
 
@@ -92,24 +96,64 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
         inFetch=true;
     //worker thread
         findSongs();
-        if(MainActivity.songList!=null)
-        if(this.songList.size()>MainActivity.songList.size())
-        MainActivity.songList=this.songList;
+        handleList();
+
 
 
 
         return null;
     }
 
+    private void handleList(){
+        if(MainActivity.songList==null) {
+            MainActivity.songList = this.songList;
+            writeListToStorage();
+        }
+        else {
+
+            if (MainActivity.resumeApp) {//whenever async is called when the app resumes
+
+
+                if (MainActivity.songList.hashCode() != SongListCompressBackTask.this.songList.hashCode()) {
+                    writeListToStorage();
+                    System.out.println("HASHCODE OF MAINACTIVITY SONGLIST BEFORE IS " + MainActivity.songList.hashCode() + " AND OF THIS IS " + this.songList.hashCode());
+
+                    MainActivity.songList = this.songList;
+                    System.out.println("HASHCODE OF MAINACTIVITY SONGLIST IS " + MainActivity.songList.hashCode()+" AND OF THIS IS "+this.songList.hashCode());
+
+                    notifyChangeInList = "change in listOfSongs noticed";
+                    System.out.println("CHANGE NOTICED ");
+
+                }
+
+
+            }
+        }
+
+    }
+
+    private void writeListToStorage(){
+
+        StoreList storeList = new StoreList(SongListCompressBackTask.this.songList, MusicControllerFragment.SONG_LIST);
+        storeList.writeArrayList();
+    }
+
 
     @Override
     protected void onPostExecute(Void aVoid) {//spawns a ui thread from ui thread
         inFetch=false;
+        if(!MainActivity.resumeApp)
         handleRecyclerView();
 
         activity.progressDialog.hide();
         activity.progressDialog=null;
         Toast.makeText(context,songList.size()+" songs retrieved",Toast.LENGTH_SHORT).show();
+        if(notifyChangeInList.length()!=0) {
+            Toast.makeText(context, notifyChangeInList, Toast.LENGTH_SHORT).show();
+            handleRecyclerView();
+        }
+
+
     }
 
     @Override
@@ -118,6 +162,8 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
     }
 
     public ArrayList<Song> getSongList(){return songList;}
+
+
 
 
     private void findSongs(){

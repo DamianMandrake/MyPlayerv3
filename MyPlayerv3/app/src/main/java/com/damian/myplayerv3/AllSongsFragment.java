@@ -31,8 +31,9 @@ public class AllSongsFragment extends Fragment {
         View view=inflater.inflate(R.layout.frag_main,container,false);
         ((MainActivity)getActivity()).myAppBar.setText("All Songs");
         recyclerView=(RecyclerView)view.findViewById(R.id.songRecycler);
-
-        initRecycler(MainActivity.songList);//could lead to npe on other devices
+        if(MainActivity.resumeApp)
+        initRecycler(MainActivity.songList);//could lead to npe on other devices...
+        // prolly only if i add the readObject to a thread... dont know for sure... will try it out later
 
         return view;
     }

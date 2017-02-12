@@ -60,11 +60,32 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
     private ImageButton prev,next;
     private ToggleButton playPause;public ToggleButton smallPlayPause;
     private SeekBar seekBar;
-    private Handler handler;
+    private Handler handler,reloadStateHandler;//reload state handler checks coninuously for initialkziation of music service
+    //after which the song will be played .... or not
     private Button b,shuffle;
     private boolean isInTouch=false;public boolean hasSavedStateBeenCalled=false;
     private Song song;
-    int progress;
+
+
+     int progress;//this is for the seekbar
+    int retrievedProgress;//this is for loadLastSong();
+
+
+    private int songPos;//songPOs is for reloadState only
+
+    private Runnable musicServiceStateChecker=new Runnable() {
+        @Override
+        public void run() {
+            if(musicService!=null){
+
+
+                reloadStateHandler.removeCallbacks(this);
+                return;
+
+            }
+            reloadStateHandler.postDelayed(this,100);
+        }
+    };
 
 
 
@@ -106,7 +127,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
         //loadLastSong();
         //HAVE TO REWRITE.....
         /*try{
-            loadLastSong();
+            //    loadLastSong();
 
 
         }catch (NullPointerException npe){
@@ -172,7 +193,8 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
         View view=inflater.inflate(R.layout.music_cotroller_frag, container, false);
 
         System.out.println("is in oncReate");
-        handler=new Handler();
+        handler=new Handler();reloadStateHandler=new Handler();
+
 
         smallSongTitle=(TextView)view.findViewById(R.id.smallSongTitle);
         //songName=(TextView)view.findViewById(R.id.songName);
@@ -216,7 +238,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                progress = i;
+                MusicControllerFragment.this.progress = i;
 
 
             }
@@ -232,7 +254,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
             public void onStopTrackingTouch(SeekBar seekBar) {
                 System.out.println("final progress is " + progress);
                 if (isInTouch) {
-                    musicService.seekTo(progress);
+                    musicService.seekTo(MusicControllerFragment.this.progress);
                     isInTouch = false;
                 }
                 updateSeekbar();
@@ -357,6 +379,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
         editor.putInt(CURR_SONG_POS_REF, musicService.getSongPosition());//since ive put songPos i can call setSongPos and call play
         editor.putInt(REPEAT_BUTTON_STATUS, MusicService.repeatState);
         editor.putBoolean(HAS_SAVE_BEEN_CALLED, true);
+        System.out.println("progress being saved is "+progress);
         editor.putInt(SEEKBAR_POS, progress);
 
 
@@ -375,31 +398,33 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
 
 
 
-    private void loadLastSong(){
+    public void loadLastSong(SharedPreferences s){
         if(!musicService.isPlaying()) {
-            SharedPreferences sharedPreferences = getActivity().getPreferences(Context.MODE_PRIVATE);
+            SharedPreferences sharedPreferences = s;
             Map t=sharedPreferences.getAll();
             hasSavedStateBeenCalled=(Boolean)t.get(HAS_SAVE_BEEN_CALLED);
-            musicService.setSongPosition((Integer) t.get(CURR_SONG_POS_REF));
+            songPos=((Integer) t.get(CURR_SONG_POS_REF));
+            MusicControllerFragment.this.retrievedProgress=(Integer)t.get(SEEKBAR_POS);
 
-            musicService.playSong();
-
+            this.play(songPos);
+            //prolly will have to seek
+            //musicService.seekTo(progress);//leads to illegal state hence need to do it in onPRepared state of mediaplayer
+            System.out.println("PROGRESS IN loadstate is " + MusicControllerFragment.this.retrievedProgress);
 
 
             MusicService.repeatState=(Integer)t.get(REPEAT_BUTTON_STATUS);
             int p=(Integer)t.get("seekbarMax");
             setRepeatButton();
-            //this will pause the song bydefault
-            progress=(Integer)t.get(SEEKBAR_POS);
-            seekBar.setProgress(progress);
+            System.out.println("progress retrieved is " + this.progress);
+            seekBar.setProgress(MusicControllerFragment.this.progress);
+
             seekBar.setMax(p);
-            handleButtons(false,false);
+            this.handleButtons(false,false);
             //handleButtons(true);//not pausing the song ... since till the time the true part is executed the musicService hasnt really started playing the song...
 
 
 
         }
-        System.out.println("Muisc is playing");
     }
 
     //to be called while restoring state... also called whenever its clicked

@@ -88,38 +88,39 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
             System.out.println("inside onServiceConnected of musicConnection which inits musicService");
             MusicService.MusicBinder musicBinder = (MusicService.MusicBinder) service;
             System.out.println(musicBinder.toString()+" music BINDER");
-            musicService = musicBinder.getServiceInstance();
-            musicControllerFragment.setMusicService(musicService);
-            if(resumeApp)
-                musicService.setSongsList(songList);
+            MainActivity.this.musicService = musicBinder.getServiceInstance();
+
+            MainActivity.this.musicService.setRef(MainActivity.this.musicControllerFragment);
+
+            MainActivity.this.musicControllerFragment.setMusicService(MainActivity.this.musicService);
+
+
             System.out.println("MUSIC SERVICE HAS VAL " + musicService.toString());
             isPlayerBound = true;
 
-            if(resumeApp && musicService.isPlaying()) {
-                System.out.println("Inside service if");
-                Song s=musicService.getCurrentlyPlayingSong();//happens only if musicService is running ie most times... have to check it out
-                if(s!=null) {
-                    System.out.println("setting song to curr");
+            if(resumeApp ) {
 
-                    musicControllerFragment.setMusicService(musicService);
+                System.out.println("songlist got set to musicService");
+                MainActivity.this.musicService.setSongsList(MainActivity.songList);
 
-                    musicControllerFragment.setCurrentSong(s);
-                    int maxDur=musicService.getDuration();
-                    musicControllerFragment.setSeekBarMax(maxDur);
-                    musicControllerFragment.setMaxDuration(maxDur);
+                if (musicService.isPlaying()) {
+                    System.out.println("Inside service if");
+                    Song s = musicService.getCurrentlyPlayingSong();//happens only if musicService is running ie most times... have to check it out
+                    if (s != null) {
+                        System.out.println("setting song to curr");
 
 
+                        musicControllerFragment.setCurrentSong(s);
+                        int maxDur = musicService.getDuration();
+                        musicControllerFragment.setSeekBarMax(maxDur);
+                        musicControllerFragment.setMaxDuration(maxDur);
 
 
-
-                    //making interface which gets called as soon as this guy gets initialized
-
-
-
-
+                    }
+                } else {
+                    musicService.load();
                 }
             }
-            musicService.setRef(musicControllerFragment);
 
 
 
@@ -147,6 +148,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
             musicPlayerIntent=new Intent(this,mHolder);
             System.out.println("about to start service");
+            startService(musicPlayerIntent);
             getApplicationContext().bindService(musicPlayerIntent, musicConnection, Context.BIND_AUTO_CREATE);//, musicConnection, Context.BIND_AUTO_CREATE);
 
 
@@ -191,10 +193,12 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         if(resumeApp){
             StoreList storeList=new StoreList(MusicControllerFragmentConstants.SONG_LIST);
             songList=storeList.readArrayList();
-            System.out.println("arraylist is "+songList.size());
-
-            allSongsFragment.initRecycler(songList);
-            System.out.println("arraylist is "+songList.size());
+            if(songList==null) {
+                resumeApp = false;
+                System.out.println("ARRAYLIST IS NUULL");
+            }
+            //allSongsFragment.initRecycler(songList);//never going to happen since recycler view is null
+            // and onCreateView hasnt been called
         }
 
 
@@ -230,7 +234,6 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
             if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
                 System.out.println(" permissions had been granted before about to start async");
                 b.setVisibility(View.INVISIBLE);
-                if(!resumeApp)
                 allSongsFragment.setBackTaskAndExecute(this);
                 setFramesVisible();
                 initBotFrag();
@@ -255,17 +258,19 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
     }
 
     void savePreferences(){
-        System.out.println("inside savepreferences of mainActivity");
-        SharedPreferences sharedPreferences=getSharedPreferences("myPref", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor=sharedPreferences.edit();
-        musicService.setmSharedPreferencesEditor(editor);
+        try {
+            System.out.println("inside savepreferences of mainActivity");
+            SharedPreferences sharedPreferences = getSharedPreferences("myPref", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            musicService.setmSharedPreferencesEditor(editor);
 
-        resumeApp=true;
-        editor.putBoolean(IS_IN_ON_DESTROY, resumeApp);
-        editor.apply();
-        System.out.println("get boolean" + sharedPreferences.getBoolean(IS_IN_ON_DESTROY, false));
-
-        musicControllerFragment.save(editor);
+            resumeApp = true;
+            editor.putBoolean(IS_IN_ON_DESTROY, resumeApp);
+            editor.apply();
+            musicControllerFragment.save(editor);
+        }catch (Exception op){
+            op.printStackTrace();
+        }
 
 
     }
@@ -432,16 +437,18 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         }
     }
 
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        savePreferences();
+
+    }
+
     @Override
     protected void onDestroy(){
         super.onDestroy();
-        savePreferences();
-        new Thread(new Runnable(){
-            public void run(){
-                StoreList storeList=new StoreList(MainActivity.songList,MusicControllerFragment.SONG_LIST);
-                storeList.writeArrayList();
-            }
-        }).start();
+
 
 
         //musicControllerFragment.saveLastSong();wont work as fragments are removed before activity

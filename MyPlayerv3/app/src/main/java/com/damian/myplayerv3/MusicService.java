@@ -3,6 +3,7 @@ package com.damian.myplayerv3;
 
         import android.app.Service;
         import android.content.ContentUris;
+        import android.content.Context;
         import android.content.Intent;
         import android.content.ServiceConnection;
         import android.content.SharedPreferences;
@@ -10,6 +11,7 @@ package com.damian.myplayerv3;
         import android.media.MediaPlayer;
         import android.net.Uri;
         import android.os.Binder;
+        import android.os.Handler;
         import android.os.IBinder;
         import android.os.Parcel;
         import android.os.Parcelable;
@@ -37,6 +39,11 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     static boolean isShuffleOn=false;
     private SharedPreferences.Editor mSharedPreferencesEditor;
 
+
+    //prolly really bad programming.... cant thuink of anything else right now
+
+
+
     //might have to implement parcelable to write the current state in a bundle
     //Parcelable
 
@@ -51,9 +58,19 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
         mediaPlayer=new MediaPlayer();
         initMusicPlayer();
 
+
+
     }
     public void setmSharedPreferencesEditor(SharedPreferences.Editor s){
         this.mSharedPreferencesEditor=s;
+
+    }
+    public void load(){
+        if(MainActivity.resumeApp){
+            SharedPreferences sharedPreferences=getApplication().getSharedPreferences("myPref",Context.MODE_PRIVATE);
+            ref.loadLastSong(sharedPreferences);
+
+        }
     }
 
 
@@ -68,6 +85,15 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     public void unbindService(ServiceConnection conn) {
         super.unbindService(conn);
 
+
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        super.onTaskRemoved(rootIntent);
+        System.out.println(inTaskRemoved);
+
+        ref.save(mSharedPreferencesEditor);
     }
 
     public void initMusicPlayer(){
@@ -104,27 +130,30 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
             return MusicService.this;//return an instance of MusicService... this is being calledin the MainActivity as a part of SrviceConnection callback so that you can actually obtain the instance of the service from the OS
         }
     }
+    public ArrayList getSongList(){return songsList;}
     public void playSong(){
-        mediaPlayer.reset();
-        Song toBePlayed=songsList.get(songPosition);
-        System.out.println("playing "+toBePlayed.getTitle());
 
-        ref.setCurrentSong(toBePlayed);
-        playCount =!playCount ;
+            mediaPlayer.reset();
+            Song toBePlayed = songsList.get(songPosition);
+            System.out.println("playing " + toBePlayed.getTitle());
 
-        //done ... dont have to do this anywhere else;
-        long currSong=toBePlayed.getId();
-        Uri trackUri= ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,currSong);
+            ref.setCurrentSong(toBePlayed);
+            playCount = !playCount;
 
-        try {
-            mediaPlayer.setDataSource(getApplicationContext(), trackUri);
+            //done ... dont have to do this anywhere else;
+            long currSong = toBePlayed.getId();
+            Uri trackUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, currSong);
 
-        }catch (IOException io){
-            System.out.println("MusicPlayer Excpetion ");
-        }
+            try {
+                mediaPlayer.setDataSource(getApplicationContext(), trackUri);
 
-        mediaPlayer.prepareAsync();
+            } catch (IOException io) {
+                System.out.println("MusicPlayer Excpetion ");
+                System.out.println("Couldnt play song for some reason");
 
+            }
+
+            mediaPlayer.prepareAsync();
 
     }
 
@@ -255,11 +284,19 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
         mediaPlayer.start();
         int p=mediaPlayer.getDuration();
         ref.setSeekBarMax(p);p/=1000;
-        ref.getEndTime().setText((p/60)+":"+p%60);
-        System.out.println("************************************** IN ONCOMPLETED OF MEDIAPLAYER");
+        ref.getEndTime().setText((p / 60) + ":" + p % 60);
+
         if(ref.hasSavedStateBeenCalled) {//to play song from the point it was paused
+            System.out.println("***SEEEKING***... VAL OF retrieved progress is "+ref.retrievedProgress);
             ref.hasSavedStateBeenCalled=false;
-            mediaPlayer.seekTo(ref.progress);
+            //System.out.println("value before seeeking is "+ref.progress);
+            //System.out.println("value of tempProgress before seeeking is "+this.tempProgress);
+
+            //tetsting it out... not really sure of this
+
+            this.seekTo(ref.retrievedProgress);
+
+
         }
 
 
@@ -270,9 +307,9 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
 
 
 
-
 }
 interface MusicServiceConstants{
      static final byte PLAY_NORMALLY=0,REPEAT_ONCE=1,REPEAT_INFINITELY=2;
-
+    static final String inTaskRemoved="****IN****ON****TASK****REMOVED";
+    static final String HANDLER_PROGRESS="handler progress";
 }
