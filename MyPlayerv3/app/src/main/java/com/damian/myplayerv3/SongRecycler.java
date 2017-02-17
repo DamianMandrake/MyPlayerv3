@@ -1,6 +1,7 @@
 package com.damian.myplayerv3;
 
 
+        import android.app.Activity;
         import android.content.Context;
         import android.graphics.Bitmap;
         import android.graphics.BitmapFactory;
@@ -16,6 +17,7 @@ package com.damian.myplayerv3;
 
         import java.io.FileInputStream;
         import java.io.IOException;
+        import java.lang.reflect.Array;
         import java.util.ArrayList;
 
 /**
@@ -25,14 +27,14 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
 
     private Context ctx;
     private ArrayList<Song> songList;
-    private static MusicService musicService;
+    private MainActivity activity;
+    private static ArrayList<Song> musicServiceList;
 
     static private PlaySong playSong;//reference obj... is static since i have to reference this from the inner class
 
-    public SongRecycler(Context c, ArrayList a){
+    public SongRecycler(MainActivity activity,Context c, ArrayList a){
         ctx=c;
-        songList=a;
-
+        songList=a;this.activity=(MainActivity)activity;
         System.out.println("INSIDE CTOR OF SOngRecycyler");
 
 
@@ -115,7 +117,7 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
 
 
 
-    public static class SongViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+    public static class SongViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener,SetTempList{
         TextView songName,artistName;
         ImageView albumArt;
         ArrayList<Song> tempSong;
@@ -131,6 +133,8 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
             songName=(TextView)view.findViewById(R.id.songTitle);
             artistName=(TextView)view.findViewById(R.id.artistName);
             albumArt=(ImageView) view.findViewById(R.id.songImg);
+            SongRecycler.setTempList(this);
+
 
         }
 
@@ -138,8 +142,12 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
         @Override
         public void onClick(View view){
             int position=getAdapterPosition();
-            //Song clickedSong=tempSong.get(position);
-            //Toast.makeText(ctx,"You just clicked on "+clickedSong.getTitle(),Toast.LENGTH_SHORT).show();
+            if(MainActivity.isInSearchView){//false means it actually is in searchView true means it isnt
+             MainActivity.isInSearchView=false;
+
+                Song s=tempSong.get(position);
+                SongRecycler.playSong.play(s);
+            }else
             SongRecycler.playSong.play(position);
 
 
@@ -154,15 +162,39 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
             return tempSong.get(p).getLargeImgPath();
         }
 
+        @Override
+        public void setList(ArrayList<Song> s){
+            MainActivity.isInSearchView=true;
+            tempSong=s;
 
-
+            System.out.println("displaying songs in tempSong");
+            for(Song so:tempSong)
+                System.out.println(so.toString());
+        }
 
 
     }
 
 
+    public void setFilter(ArrayList<Song> temp){
+        this.songList=new ArrayList<Song >();
+        this.songList.addAll(temp);
+        musicServiceList=activity.getMusicService().getSongList();
+
+        SongRecycler.setTempList.setList(this.songList);
+        this.notifyDataSetChanged();
+    }
+    private static SetTempList setTempList;
+    public static void setTempList(SetTempList ref){
+        setTempList=ref;
+    }
+
+    interface SetTempList{
+        public void setList(ArrayList<Song> s);
+    }
      interface PlaySong{
         public void play(int position);
+         public void play(Song s );
     }
 
 

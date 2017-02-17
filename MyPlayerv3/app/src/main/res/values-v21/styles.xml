@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="AppTheme" parent="@style/Theme.AppCompat">
+        <item name="android:background">#1b2737</item>
+
     </style>
     <style name="FragTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
 

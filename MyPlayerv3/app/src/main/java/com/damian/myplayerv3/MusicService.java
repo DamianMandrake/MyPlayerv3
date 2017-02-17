@@ -133,28 +133,32 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     public ArrayList getSongList(){return songsList;}
     public void playSong(){
 
-            mediaPlayer.reset();
             Song toBePlayed = songsList.get(songPosition);
             System.out.println("playing " + toBePlayed.getTitle());
 
             ref.setCurrentSong(toBePlayed);
             playCount = !playCount;
+            actuallyPlay(toBePlayed.getId());
 
             //done ... dont have to do this anywhere else;
-            long currSong = toBePlayed.getId();
-            Uri trackUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, currSong);
 
-            try {
-                mediaPlayer.setDataSource(getApplicationContext(), trackUri);
 
-            } catch (IOException io) {
-                System.out.println("MusicPlayer Excpetion ");
-                System.out.println("Couldnt play song for some reason");
+    }
+    public void actuallyPlay(long id){
+        mediaPlayer.reset();
+        long currSong = id;
+        Uri trackUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, currSong);
 
-            }
+        try {
+            mediaPlayer.setDataSource(getApplicationContext(), trackUri);
 
-            mediaPlayer.prepareAsync();
+        } catch (IOException io) {
+            System.out.println("MusicPlayer Excpetion ");
+            System.out.println("Couldnt play song for some reason");
 
+        }
+
+        mediaPlayer.prepareAsync();
     }
 
     public void setSongPosition(int p){

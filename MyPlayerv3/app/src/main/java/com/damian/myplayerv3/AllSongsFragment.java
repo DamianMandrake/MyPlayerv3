@@ -21,6 +21,7 @@ public class AllSongsFragment extends Fragment {
     private RecyclerView recyclerView;
     private SongListCompressBackTask backTask;
     private Context context;
+    private SongRecycler songRecycler;
 
 
 
@@ -29,7 +30,8 @@ public class AllSongsFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         View view=inflater.inflate(R.layout.frag_main,container,false);
-        ((MainActivity)getActivity()).myAppBar.setText("All Songs");
+        //((MainActivity)getActivity()).myAppBar.setText("All Songs");
+        ((MainActivity)getActivity()).toolbar.setTitle("All songs");
         recyclerView=(RecyclerView)view.findViewById(R.id.songRecycler);
         if(MainActivity.resumeApp)
         initRecycler(MainActivity.songList);//could lead to npe on other devices...
@@ -51,16 +53,28 @@ public class AllSongsFragment extends Fragment {
 
         if(recyclerView!=null) {
             System.out.println("recycler view is NOT NULL");
-            SongRecycler songRecycler = new SongRecycler(context, s);
-            songRecycler.setPlaySongReference(((MainActivity) getActivity()).musicControllerFragment);
-            recyclerView.setAdapter(songRecycler);
-            recyclerView.setLayoutManager(new LinearLayoutManager(context));
-            recyclerView.setVisibility(View.VISIBLE);
+            this.songRecycler = new SongRecycler((MainActivity)getActivity(),context, s);
+            this.songRecycler.setPlaySongReference(((MainActivity) getActivity()).musicControllerFragment);
+            this.recyclerView.setAdapter(songRecycler);
+            this.recyclerView.setLayoutManager(new LinearLayoutManager(context));
+            this.recyclerView.setVisibility(View.VISIBLE);
 
         }
 
     }
     public SongListCompressBackTask getBackTask(){return backTask;}
+
+    public void setFilter(String s){
+        s=s.toUpperCase();
+        ArrayList<Song> arrayList=new ArrayList<Song>();
+        for(Song song:MainActivity.songList){
+            if(song.getTitle().toUpperCase().contains(s))
+                arrayList.add(song);
+        }
+        this.songRecycler.setFilter(arrayList);
+
+
+    }
 
 
 

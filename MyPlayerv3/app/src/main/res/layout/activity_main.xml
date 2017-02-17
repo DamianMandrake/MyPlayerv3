@@ -8,23 +8,15 @@
 
 
     >
-    <FrameLayout
+    <android.support.v7.widget.Toolbar
+        android:layout_height="60dp"
         android:layout_width="match_parent"
-        android:layout_height="65dp"
-        android:id="@+id/myAppBar"
+        android:id="@+id/toolbar"
+        android:titleTextColor="#FFF"
         android:background="#2c2c2c"
-        android:elevation="10dp"
-        >
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:id="@+id/appBarTextView"
-        android:layout_gravity="center|left"
-        android:textSize="30dp"
-        android:textColor="#FFF"
+
 
         />
-    </FrameLayout>
 
     <Button
         android:layout_height="wrap_content"
@@ -43,7 +35,7 @@
         android:layout_width="match_parent"
         android:layout_height="425dp"
         android:id="@+id/musicListFrag"
-        android:layout_below="@+id/myAppBar"
+        android:layout_below="@+id/toolbar"
 
         android:paddingLeft="@dimen/activity_horizontal_margin"
         android:paddingRight="16dp"

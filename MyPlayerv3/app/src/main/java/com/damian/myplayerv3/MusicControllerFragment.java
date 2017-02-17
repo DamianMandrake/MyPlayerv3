@@ -452,20 +452,29 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
     public void onDestroy() {
         super.onDestroy();
         System.out.println("IN FRAG ON DESTROY");
-        //saveLastSong();
+        //sa);
     }
 
 
     //Overriding the callback i wrote in the SongRecycler class... everytime onClick is generated in SongRecycler this callback will be called
     @Override
     public void play(int p){
-        System.out.println("music service is null "+musicService==null);
+        System.out.println("music service is null " + musicService == null);
         if(musicService!=null) {
 
         musicService.setSongPosition(p);
         musicService.playSong();
         handleButtons(false, false);
     }
+
+    }
+
+    @Override
+    public void play(Song s){
+        System.out.println("going to invoke playSong from play(Song)");
+        musicService.actuallyPlay(s.getId());
+        this.setCurrentSong(s);
+        handleButtons(false,false);
 
     }
 
