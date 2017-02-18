@@ -2,8 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#151E29"
-
+    android:background="@color/darkTwitter"
     >
     <!--tbd - button title and imageview -->
 
@@ -12,7 +11,7 @@
         android:layout_height="80dp"
         android:id="@+id/topSection"
         android:elevation="10dp"
-        android:background="#EF5350"
+        android:background="@color/barRed"
         >
 
         <ImageView
@@ -117,14 +116,16 @@
         android:layout_width="match_parent"
         android:layout_below="@+id/imageViewContainer"
         android:layout_height="40dp"
-        android:background="#1b2737"
+        android:background="@color/barRed"
+
         >
         <SeekBar
             android:layout_width="match_parent"
             android:layout_height="30dp"
             android:layout_gravity="top"
             android:id="@+id/musicSeekbar"
-
+            android:progressBackgroundTint="#FFF"
+            android:progressTint="#FFF"
 
             />
         <TextView
@@ -157,7 +158,7 @@
         android:layout_height="60dp"
         android:id="@+id/buttonPlaceholder"
 
-        android:background="#1b2737"
+        android:background="@color/barRed"
         android:layout_below="@+id/seekbarContainer"
         >
 
@@ -169,7 +170,7 @@
             android:id="@+id/prev"
             android:src="@mipmap/prev"
             android:layout_gravity="top|left"
-            android:background="#1b2737"
+            android:background="@color/barRed"
 
             />
 
@@ -192,7 +193,7 @@
             android:id="@+id/nextSong"
             android:src="@mipmap/next"
             android:layout_gravity="top|right"
-            android:background="#1b2737"
+            android:background="@color/barRed"
 
  />
 

@@ -2,6 +2,7 @@ package com.damian.myplayerv3;
 
 import android.Manifest;
 
+import android.app.ActionBar;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
 
@@ -29,13 +30,16 @@ import android.os.Bundle;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
+import android.text.Layout;
 import android.text.method.KeyListener;
 import android.util.DisplayMetrics;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.FrameLayout;
 
@@ -43,23 +47,28 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.w3c.dom.Text;
+import android.support.v7.widget.ListPopupWindow;
 
 import java.io.File;
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements MainActivityConstants {
+public class MainActivity extends AppCompatActivity implements MainActivityConstants,SongRecycler.GetFromList {
 
 
     static int MAX_TRANSLATION;
+    static int MAX_WINDOW_HEIGHT=0;
     private static Context context;
     static File STORAGE_DIR;
+
+    public SearchView searchView;
     public void setStorageDir(File f){
         STORAGE_DIR=f;
 
     }
 
-    static boolean isInSearchView=false;
+    //
+    //
+    // boolean isInSearchView=false;//can useSearchView.isIconified();
     public static Context getContext(){return context;}
 
     public void setMaxTranslation(int x) {
@@ -88,10 +97,17 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
     private Class mHolder=MusicService.class;
     private float previousY,trans,diff;
 
+    public MenuItem menuItem;
+
     public static ArrayList<Song> songList=new ArrayList<>();
+    private ArrayList<Song> tempList=new ArrayList<>();
     public TextView textView;
 
 
+    private Song tempSong;
+
+    private ListPopupWindow listPopupWindow;
+    private CustomAdapter customAdapter;
 
 
 
@@ -106,7 +122,9 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
             System.out.println(musicBinder.toString()+" music BINDER");
             MainActivity.this.musicService = musicBinder.getServiceInstance();
 
+
             MainActivity.this.musicService.setRef(MainActivity.this.musicControllerFragment);
+
 
             MainActivity.this.musicControllerFragment.setMusicService(MainActivity.this.musicService);
 
@@ -180,17 +198,15 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         super.onCreate(savedInstanceState);
         //check if data is present in savedInstance
 
+
+        SongRecycler.SongViewHolder.setGetFromList(this);
         System.out.println("setting layout");
         setContentView(R.layout.activity_main);
         context=getApplicationContext();
         int p=this.getResources().getDisplayMetrics().heightPixels;
+        MAX_WINDOW_HEIGHT= (int)(p*0.30);
         setMaxTranslation(p - (int) (p * TRANSLATION_THRESHOLD_PERCENTAGE));
         setStorageDir(getApplicationContext().getCacheDir());
-        /*myAppBar=(TextView)findViewById(R.id.appBarTextView);
-        myAppBar.setText(R.string.app_name);*/
-
-
-
 
 
         try{
@@ -217,35 +233,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
             // and onCreateView hasnt been called
         }
 
-        toolbar=(Toolbar)findViewById(R.id.toolbar);
-        toolbar.setTitleTextColor(Color.WHITE);
-        toolbar.setSubtitleTextColor(Color.WHITE);
-
-
-        toolbar.setTitle(getResources().getString(R.string.app_name));
-        this.setSupportActionBar(this.toolbar);
-
-
-        frameLayout=(FrameLayout)findViewById(R.id.musicControllerFragPlaceholder);
-        fragmentManager=getSupportFragmentManager();
-
-        musicListFrame=(FrameLayout)findViewById(R.id.musicListFrag);
-
-
-        progressDialog=new ProgressDialog(this);
-        progressDialog.setCancelable(false);
-        progressDialog.setInverseBackgroundForced(false);
-
-        progressDialog.setMessage("Initializing MusicPlayer");
-
-
-
-
-
-
-        b=(Button)findViewById(R.id.permButton);
-
-
+       handleUi();
 
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
@@ -277,6 +265,37 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         //this takes 2 onclick listeners
 
 
+
+    }
+
+    private void handleUi(){
+        toolbar=(Toolbar)findViewById(R.id.toolbar);
+        toolbar.setTitleTextColor(Color.WHITE);
+        toolbar.setSubtitleTextColor(Color.WHITE);
+
+
+        toolbar.setTitle(getResources().getString(R.string.app_name));
+        this.setSupportActionBar(this.toolbar);
+
+
+        frameLayout=(FrameLayout)findViewById(R.id.musicControllerFragPlaceholder);
+        fragmentManager=getSupportFragmentManager();
+
+        musicListFrame=(FrameLayout)findViewById(R.id.musicListFrag);
+
+
+        progressDialog=new ProgressDialog(this);
+        progressDialog.setCancelable(false);
+        progressDialog.setInverseBackgroundForced(false);
+
+        progressDialog.setMessage("Initializing MusicPlayer");
+
+
+
+
+
+
+        b=(Button)findViewById(R.id.permButton);
 
     }
 
@@ -388,8 +407,42 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
     //To set toolbar search icon to a custom one
     @Override
     public boolean onPrepareOptionsMenu(Menu menu){
-        MenuItem menuItem=menu.findItem(R.id.actionSearch);
-        SearchView searchView=(SearchView) MenuItemCompat.getActionView(menuItem);
+        MainActivity.this.menuItem=menu.findItem(R.id.actionSearch);
+
+        this.searchView=(SearchView) MenuItemCompat.getActionView(menuItem);
+        handleSearchViewUi();
+        initListPopUpWindow();
+        handleSearchViewCallbacks();
+
+
+
+
+        return true;
+
+    }
+
+    private void initListPopUpWindow(){
+        this.listPopupWindow=new ListPopupWindow(this);
+        this.customAdapter=new CustomAdapter(MainActivity.songList,this,R.layout.list_item);
+        this.listPopupWindow.setAdapter(this.customAdapter);
+        this.listPopupWindow.setWidth(ActionBar.LayoutParams.MATCH_PARENT);
+        this.listPopupWindow.setHeight(MainActivity.MAX_WINDOW_HEIGHT);
+        this.listPopupWindow.setModal(false);
+        this.listPopupWindow.setDropDownGravity(Gravity.CENTER);
+        this.listPopupWindow.setAnchorView(this.searchView);
+
+        this.listPopupWindow.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                MainActivity.this.musicControllerFragment.play(MainActivity.songList.indexOf(MainActivity.this.tempList.get(i)));
+                MainActivity.this.listPopupWindow.dismiss();
+            }
+        });
+    }
+
+
+
+    private void handleSearchViewCallbacks(){
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String s) {
@@ -398,12 +451,29 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
             @Override
             public boolean onQueryTextChange(String s) {
-                allSongsFragment.setFilter(s);
+                if(s.length()>0 && listPopupWindow!=null && !MainActivity.this.listPopupWindow.isShowing())
+                listPopupWindow.show();
+                MainActivity.this.tempList=new ArrayList<Song>();
+                for(Song so:MainActivity.songList)
+                    if(so.getTitle().toUpperCase().contains(s.toUpperCase()))
+                        MainActivity.this.tempList.add(so);
+
+                if(MainActivity.this.tempList.size()>4)
+                    MainActivity.this.listPopupWindow.setHeight(MainActivity.MAX_WINDOW_HEIGHT);
+                else
+                    MainActivity.this.listPopupWindow.setHeight(ActionBar.LayoutParams.WRAP_CONTENT);
+
+                MainActivity.this.customAdapter.setFilter(MainActivity.this.tempList);
+
 
 
                 return true;
             }
         });
+    }
+
+    private void handleSearchViewUi(){
+
         int searchImgId= android.support.v7.appcompat.R.id.search_button;
         ImageView v=(ImageView)searchView.findViewById(searchImgId);
         v.setImageResource(R.mipmap.search);
@@ -426,16 +496,11 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
         textView.setHintTextColor(Color.WHITE);
         textView.setHint("enter name of song");
-        MainActivity.isInSearchView=textView.didTouchFocusSelect();
+
 
         int cancelButton=android.support.v7.appcompat.R.id.search_close_btn;
         ImageView imageView=(ImageView)searchView.findViewById(cancelButton);
         imageView.setImageResource(R.mipmap.close);
-
-
-
-        return true;
-
     }
 
 
@@ -523,9 +588,21 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         super.onDestroy();
 
 
+    }
 
-        //musicControllerFragment.saveLastSong();wont work as fragments are removed before activity
 
+    @Override
+    public void setCurrSong(int p){
+        this.tempSong=MainActivity.songList.get(p);
+
+    }
+    @Override
+    public String getCurrSongImgPath(){
+        try {
+            return this.tempSong.getLargeImgPath();
+        }catch (NullPointerException npe){
+            return null;
+        }
     }
 
 

@@ -472,9 +472,13 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
     @Override
     public void play(Song s){
         System.out.println("going to invoke playSong from play(Song)");
+        System.out.println("PLAYING****SONG NAME "+s.getTitle());
+        System.out.println("Song imgPath is "+s.getLargeImgPath());
+
         musicService.actuallyPlay(s.getId());
         this.setCurrentSong(s);
-        handleButtons(false,false);
+        handleButtons(false, false);
+
 
     }
 

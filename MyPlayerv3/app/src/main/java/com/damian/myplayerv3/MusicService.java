@@ -146,6 +146,8 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     }
     public void actuallyPlay(long id){
         mediaPlayer.reset();
+
+
         long currSong = id;
         Uri trackUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, currSong);
 

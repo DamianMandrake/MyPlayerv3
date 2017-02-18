@@ -64,17 +64,7 @@ public class AllSongsFragment extends Fragment {
     }
     public SongListCompressBackTask getBackTask(){return backTask;}
 
-    public void setFilter(String s){
-        s=s.toUpperCase();
-        ArrayList<Song> arrayList=new ArrayList<Song>();
-        for(Song song:MainActivity.songList){
-            if(song.getTitle().toUpperCase().contains(s))
-                arrayList.add(song);
-        }
-        this.songRecycler.setFilter(arrayList);
 
-
-    }
 
 
 

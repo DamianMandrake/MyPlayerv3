@@ -7,6 +7,7 @@ package com.damian.myplayerv3;
         import android.graphics.BitmapFactory;
         import android.graphics.drawable.Drawable;
         import android.os.AsyncTask;
+        import android.support.v4.view.MenuItemCompat;
         import android.support.v7.widget.RecyclerView;
         import android.view.LayoutInflater;
         import android.view.View;
@@ -28,15 +29,20 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
     private Context ctx;
     private ArrayList<Song> songList;
     private MainActivity activity;
-    private static ArrayList<Song> musicServiceList;
-
+    private Song tempSong;
     static private PlaySong playSong;//reference obj... is static since i have to reference this from the inner class
 
     public SongRecycler(MainActivity activity,Context c, ArrayList a){
-        ctx=c;
-        songList=a;this.activity=(MainActivity)activity;
+        ctx=c;this.songList=new ArrayList<Song>();
+        this.initSongList(a);
+        this.activity=(MainActivity)activity;
         System.out.println("INSIDE CTOR OF SOngRecycyler");
 
+
+    }
+    void initSongList(ArrayList<Song> a){
+        for(Song s:a)
+            this.songList.add(s);
 
     }
 
@@ -57,8 +63,8 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
         final Song currSong=songList.get(position);
         System.out.println("binding "+currSong.getTitle());
         if(currSong.getLargeImgPath()!=null) {
-            holder.setCurrSong(position);
-            System.out.println("imgPath of " + currSong.getTitle() + " IS " + currSong.getImgPath());
+            SongViewHolder.getFromList.setCurrSong(position);
+            System.out.println("imgPath of " + currSong.getTitle() + " IS " + currSong.getLargeImgPath());
 
 
             //adding async thread here
@@ -70,7 +76,7 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
                 @Override
                 protected Bitmap doInBackground(RecyclerView.ViewHolder... viewHolders) {
                     v=viewHolders[0];
-                    return BitmapFactory.decodeFile(((SongViewHolder)v).getCurrSongImgPath());//since inner cant access outer
+                    return BitmapFactory.decodeFile(SongViewHolder.getFromList.getCurrSongImgPath());//since inner cant access outer
 
 
 
@@ -79,7 +85,13 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
 
                 @Override
                 protected void onPostExecute(Bitmap bitmap) {
-                    ((SongViewHolder)v).albumArt.setImageBitmap(bitmap);
+                    try {
+                        System.out.println("BITMAP IS \n"+bitmap.toString());
+
+                        ((SongViewHolder) v).albumArt.setImageBitmap(bitmap);
+                    }catch (NullPointerException npe){
+                        ((SongViewHolder) v).albumArt.setImageResource(R.drawable.notfound);
+                    }
                     System.out.println("image to albumArt just got set");
 
                 }
@@ -117,23 +129,25 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
 
 
 
-    public static class SongViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener,SetTempList{
+    public static class SongViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
         TextView songName,artistName;
         ImageView albumArt;
         ArrayList<Song> tempSong;
         Context ctx;
-        int p;
+        static GetFromList getFromList;
+
+
 
 
         SongViewHolder(View view,ArrayList<Song> arrayList,Context c){
             super(view);
+            System.out.println("****IN CTOR OF SONGVIEWHOLDER");
             view.setOnClickListener(this);
             tempSong=arrayList;
             ctx=c;
             songName=(TextView)view.findViewById(R.id.songTitle);
             artistName=(TextView)view.findViewById(R.id.artistName);
             albumArt=(ImageView) view.findViewById(R.id.songImg);
-            SongRecycler.setTempList(this);
 
 
         }
@@ -142,60 +156,30 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
         @Override
         public void onClick(View view){
             int position=getAdapterPosition();
-            if(MainActivity.isInSearchView){//false means it actually is in searchView true means it isnt
-             MainActivity.isInSearchView=false;
-
-                Song s=tempSong.get(position);
-                SongRecycler.playSong.play(s);
-            }else
+            System.out.println("*** adapterpos is "+position);
             SongRecycler.playSong.play(position);
 
 
 
         }
-
-        //added the following methods to make it kinda lightweight
-        void setCurrSong(int p){
-            this.p=p;
-        }
-        String getCurrSongImgPath(){
-            return tempSong.get(p).getLargeImgPath();
-        }
-
-        @Override
-        public void setList(ArrayList<Song> s){
-            MainActivity.isInSearchView=true;
-            tempSong=s;
-
-            System.out.println("displaying songs in tempSong");
-            for(Song so:tempSong)
-                System.out.println(so.toString());
+        public static void setGetFromList(GetFromList getFromList){
+            SongViewHolder.getFromList=getFromList;
         }
 
 
+
     }
 
-
-    public void setFilter(ArrayList<Song> temp){
-        this.songList=new ArrayList<Song >();
-        this.songList.addAll(temp);
-        musicServiceList=activity.getMusicService().getSongList();
-
-        SongRecycler.setTempList.setList(this.songList);
-        this.notifyDataSetChanged();
-    }
-    private static SetTempList setTempList;
-    public static void setTempList(SetTempList ref){
-        setTempList=ref;
-    }
-
-    interface SetTempList{
-        public void setList(ArrayList<Song> s);
-    }
      interface PlaySong{
-        public void play(int position);
+         public void play(int position);
          public void play(Song s );
     }
+    interface GetFromList{
+        public void setCurrSong(int p);
+        public String getCurrSongImgPath();
+    }
+
+
 
 
 
