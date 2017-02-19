@@ -26,7 +26,7 @@ package com.damian.myplayerv3;
 /**
  * Created by Damian on 12/30/2016.
  */
-public class MusicService extends Service implements MediaPlayer.OnErrorListener,MediaPlayer.OnCompletionListener,MediaPlayer.OnPreparedListener,MusicServiceConstants {
+public class MusicService extends Service implements MediaPlayer.OnErrorListener,MediaPlayer.OnCompletionListener,MediaPlayer.OnPreparedListener,MusicServiceConstants,BroadcastListener.SongController {
 
     private MediaPlayer mediaPlayer;
     private ArrayList<Song> songsList;
@@ -38,7 +38,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     static boolean isMediaPlayerPrepared=false;//true in onPrepared and false in onCompleted or in all other cases....
     static boolean isShuffleOn=false;
     private SharedPreferences.Editor mSharedPreferencesEditor;
-
+    public NotificationMaker notificationMaker;
 
     //prolly really bad programming.... cant thuink of anything else right now
 
@@ -53,6 +53,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
         //whenever you call baseclass lifecycle func... android binds and marks the current class as a service
         super.onCreate();
         songsList=new ArrayList<>();
+        BroadcastListener.songController=this;
 
         songPosition=0;
         mediaPlayer=new MediaPlayer();
@@ -60,6 +61,10 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
 
 
 
+    }
+
+    public void setNotificationMaker(NotificationMaker no){
+        this.notificationMaker=no;
     }
     public void setmSharedPreferencesEditor(SharedPreferences.Editor s){
         this.mSharedPreferencesEditor=s;
@@ -92,7 +97,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
         System.out.println(inTaskRemoved);
-
+        this.notificationMaker.dismissNotif();
         ref.save(mSharedPreferencesEditor);
     }
 
@@ -136,6 +141,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
             Song toBePlayed = songsList.get(songPosition);
             System.out.println("playing " + toBePlayed.getTitle());
 
+            notificationMaker.setAll(toBePlayed.getLargeImgPath(),toBePlayed.getTitle(),toBePlayed.getArtist());
             ref.setCurrentSong(toBePlayed);
             playCount = !playCount;
             actuallyPlay(toBePlayed.getId());
@@ -310,9 +316,45 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
 
 
 
+    //BroadcastListener.songcontroller methods
+
+
+    @Override
+    public void handleButtons() {
+        System.out.println("INSIDE HANDLE BUTTONS");
+        int r=0;
+        if(this.isPlaying()) {
+            r = R.mipmap.play;
+            ref.handleButtons(true,false);
+
+            this.pause();
+        }else{
+            r= R.mipmap.pause;
+            ref.handleButtons(false,false);
+
+
+            this.startPlaying();
+        }
+        this.handleNotifButton(r);
 
 
 
+    }
+
+    public void handleNotifButton(int r){
+        this.notificationMaker.setPlayPauseImg(r);
+    }
+
+    @Override
+    public void next() {
+        System.out.println("IN NEXT");
+        this.playNext();
+    }
+
+    @Override
+    public void prev() {
+        this.playPrevious();
+    }
 }
 interface MusicServiceConstants{
      static final byte PLAY_NORMALLY=0,REPEAT_ONCE=1,REPEAT_INFINITELY=2;

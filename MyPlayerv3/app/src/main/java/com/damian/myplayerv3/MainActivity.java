@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
     static int MAX_WINDOW_HEIGHT=0;
     static int MAX_MUSIC_FRAME_SIZE=0;
     static View coordinatorContent=null;
-    private static Context context;
+    static Context context;
     static File STORAGE_DIR;
 
     public SearchView searchView;
@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
     //
     //
     // boolean isInSearchView=false;//can useSearchView.isIconified();
-    public static Context getContext(){return context;}
+
 
     public void setMaxTranslation(int x) {
         MAX_TRANSLATION=x;
@@ -110,6 +110,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
 
     private Song tempSong;
+    NotificationMaker notificationMaker;
 
     private ListPopupWindow listPopupWindow;
     private CustomAdapter customAdapter;
@@ -129,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
 
             MainActivity.this.musicService.setRef(MainActivity.this.musicControllerFragment);
-
+            MainActivity.this.musicService.setNotificationMaker(MainActivity.this.notificationMaker);
 
             MainActivity.this.musicControllerFragment.setMusicService(MainActivity.this.musicService);
 
@@ -206,7 +207,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
         SongRecycler.SongViewHolder.setGetFromList(this);
         setContentView(R.layout.activity_main);
-        context=getApplicationContext();
+        context=this;
         int p=this.getResources().getDisplayMetrics().heightPixels;
         System.out.println("HEIGHT OF SCREEN IS "+p);
         MAX_WINDOW_HEIGHT= (int)(p*0.30);
@@ -214,6 +215,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         setMaxTranslation(p - (int) (p * TRANSLATION_THRESHOLD_PERCENTAGE));
         setStorageDir(getApplicationContext().getCacheDir());
         coordinatorContent=findViewById(android.R.id.content);
+         notificationMaker=new NotificationMaker(this);
 
 
         try{
@@ -294,7 +296,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
         //layoutparams let you place your ui elements witht the help of java code
         RelativeLayout.LayoutParams layoutParams=new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,MAX_MUSIC_FRAME_SIZE);
-        layoutParams.addRule(RelativeLayout.BELOW,R.id.toolbar);
+        layoutParams.addRule(RelativeLayout.BELOW, R.id.toolbar);
         musicListFrame.setLayoutParams(layoutParams);
 
         progressDialog=new ProgressDialog(this);
@@ -447,7 +449,9 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         this.listPopupWindow.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                MainActivity.this.musicControllerFragment.play(MainActivity.songList.indexOf(MainActivity.this.tempList.get(i)));
+                Song s=(MainActivity.this.tempList.get(i));
+                MainActivity.this.musicControllerFragment.play(s);
+                MainActivity.this.musicService.setSongPosition(MainActivity.songList.indexOf(s));
                 MainActivity.this.listPopupWindow.dismiss();
             }
         });
@@ -464,16 +468,18 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
             @Override
             public boolean onQueryTextChange(String s) {
-                if(s.length()>0 && listPopupWindow!=null && !MainActivity.this.listPopupWindow.isShowing())
-                listPopupWindow.show();
-                MainActivity.this.tempList=new ArrayList<Song>();
-                for(Song so:MainActivity.songList)
-                    if(so.getTitle().toUpperCase().contains(s.toUpperCase()))
+
+                MainActivity.this.tempList = new ArrayList<Song>();
+                for (Song so : MainActivity.songList)
+                    if (so.getTitle().toUpperCase().contains(s.toUpperCase()))
                         MainActivity.this.tempList.add(so);
 
 
                 MainActivity.this.customAdapter.setFilter(MainActivity.this.tempList);
-
+                if (MainActivity.this.tempList.size() > 0)
+                    MainActivity.this.listPopupWindow.show();
+                else
+                    MainActivity.this.listPopupWindow.dismiss();
 
 
                 return true;
@@ -589,6 +595,11 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
     protected void onPause() {
         super.onPause();
         savePreferences();
+
+    }
+    @Override
+    protected void onResume(){
+        super.onResume();
 
     }
 

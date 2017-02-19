@@ -47,7 +47,7 @@ public class AllSongsFragment extends Fragment {
 
     }
     public void initRecycler(ArrayList<Song> s){
-        context=context==null?MainActivity.getContext():context;
+        context=context==null?MainActivity.context:context;
 
         System.out.println("INSIDE INIT RECYCLER");
 
