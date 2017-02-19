@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.support.annotation.MainThread;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
@@ -66,6 +67,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
     private boolean isInTouch=false;public boolean hasSavedStateBeenCalled=false;
     private Song song;
 
+    private View view;
 
      int progress;//this is for the seekbar
     int retrievedProgress;//this is for loadLastSong();
@@ -190,7 +192,8 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view=inflater.inflate(R.layout.music_cotroller_frag, container, false);
+
+        view= view==null?inflater.inflate(R.layout.music_cotroller_frag, container, false):view;
 
         System.out.println("is in oncReate");
         handler=new Handler();reloadStateHandler=new Handler();
@@ -271,8 +274,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
         return view;
     }
     void toast(String a){
-
-        Toast.makeText(getContext(),a,Toast.LENGTH_SHORT).show();
+        Snackbar.make(MainActivity.coordinatorContent,a,Snackbar.LENGTH_SHORT).show();
 
 
     }
@@ -400,29 +402,32 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
 
     public void loadLastSong(SharedPreferences s){
         if(!musicService.isPlaying()) {
-            SharedPreferences sharedPreferences = s;
-            Map t=sharedPreferences.getAll();
-            hasSavedStateBeenCalled=(Boolean)t.get(HAS_SAVE_BEEN_CALLED);
-            songPos=((Integer) t.get(CURR_SONG_POS_REF));
-            MusicControllerFragment.this.retrievedProgress=(Integer)t.get(SEEKBAR_POS);
+            try {
+                SharedPreferences sharedPreferences = s;
+                Map t = sharedPreferences.getAll();
+                hasSavedStateBeenCalled = true;
+                songPos = ((Integer) t.get(CURR_SONG_POS_REF));
+                MusicControllerFragment.this.retrievedProgress = (Integer) t.get(SEEKBAR_POS);
 
-            this.play(songPos);
-            //prolly will have to seek
-            //musicService.seekTo(progress);//leads to illegal state hence need to do it in onPRepared state of mediaplayer
-            System.out.println("PROGRESS IN loadstate is " + MusicControllerFragment.this.retrievedProgress);
-
-
-            MusicService.repeatState=(Integer)t.get(REPEAT_BUTTON_STATUS);
-            int p=(Integer)t.get("seekbarMax");
-            setRepeatButton();
-            System.out.println("progress retrieved is " + this.progress);
-            seekBar.setProgress(MusicControllerFragment.this.progress);
-
-            seekBar.setMax(p);
-            this.handleButtons(false,false);
-            //handleButtons(true);//not pausing the song ... since till the time the true part is executed the musicService hasnt really started playing the song...
+                this.play(songPos);
+                //prolly will have to seek
+                //musicService.seekTo(progress);//leads to illegal state hence need to do it in onPRepared state of mediaplayer
+                System.out.println("PROGRESS IN loadstate is " + MusicControllerFragment.this.retrievedProgress);
 
 
+                MusicService.repeatState = (Integer) t.get(REPEAT_BUTTON_STATUS);
+                int p = (Integer) t.get("seekbarMax");
+                setRepeatButton();
+                System.out.println("progress retrieved is " + this.progress);
+                seekBar.setProgress(MusicControllerFragment.this.progress);
+
+                seekBar.setMax(p);
+                this.handleButtons(false, false);
+                //handleButtons(true);//not pausing the song ... since till the time the true part is executed the musicService hasnt really started playing the song...
+
+            }catch (NullPointerException npe){
+                toast("Couldnt load song");
+            }
 
         }
     }
@@ -473,7 +478,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
     public void play(Song s){
         System.out.println("going to invoke playSong from play(Song)");
         System.out.println("PLAYING****SONG NAME "+s.getTitle());
-        System.out.println("Song imgPath is "+s.getLargeImgPath());
+        System.out.println("Song imgPath is " + s.getLargeImgPath());
 
         musicService.actuallyPlay(s.getId());
         this.setCurrentSong(s);

@@ -20,6 +20,7 @@ import android.os.Environment;
 import android.os.IBinder;
 import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
@@ -39,11 +40,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.FrameLayout;
 
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -57,6 +60,8 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
     static int MAX_TRANSLATION;
     static int MAX_WINDOW_HEIGHT=0;
+    static int MAX_MUSIC_FRAME_SIZE=0;
+    static View coordinatorContent=null;
     private static Context context;
     static File STORAGE_DIR;
 
@@ -200,13 +205,15 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
 
         SongRecycler.SongViewHolder.setGetFromList(this);
-        System.out.println("setting layout");
         setContentView(R.layout.activity_main);
         context=getApplicationContext();
         int p=this.getResources().getDisplayMetrics().heightPixels;
+        System.out.println("HEIGHT OF SCREEN IS "+p);
         MAX_WINDOW_HEIGHT= (int)(p*0.30);
+        MAX_MUSIC_FRAME_SIZE=(int)(p*MUSIC_LIST_FRAME_PERCENT);
         setMaxTranslation(p - (int) (p * TRANSLATION_THRESHOLD_PERCENTAGE));
         setStorageDir(getApplicationContext().getCacheDir());
+        coordinatorContent=findViewById(android.R.id.content);
 
 
         try{
@@ -276,13 +283,19 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
         toolbar.setTitle(getResources().getString(R.string.app_name));
         this.setSupportActionBar(this.toolbar);
+        System.out.println("toolbar height is " + toolbar.getHeight());
 
 
         frameLayout=(FrameLayout)findViewById(R.id.musicControllerFragPlaceholder);
+        frameLayout.setTranslationY(MAX_TRANSLATION);
         fragmentManager=getSupportFragmentManager();
 
         musicListFrame=(FrameLayout)findViewById(R.id.musicListFrag);
 
+        //layoutparams let you place your ui elements witht the help of java code
+        RelativeLayout.LayoutParams layoutParams=new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,MAX_MUSIC_FRAME_SIZE);
+        layoutParams.addRule(RelativeLayout.BELOW,R.id.toolbar);
+        musicListFrame.setLayoutParams(layoutParams);
 
         progressDialog=new ProgressDialog(this);
         progressDialog.setCancelable(false);
@@ -458,10 +471,6 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
                     if(so.getTitle().toUpperCase().contains(s.toUpperCase()))
                         MainActivity.this.tempList.add(so);
 
-                if(MainActivity.this.tempList.size()>4)
-                    MainActivity.this.listPopupWindow.setHeight(MainActivity.MAX_WINDOW_HEIGHT);
-                else
-                    MainActivity.this.listPopupWindow.setHeight(ActionBar.LayoutParams.WRAP_CONTENT);
 
                 MainActivity.this.customAdapter.setFilter(MainActivity.this.tempList);
 
@@ -538,9 +547,9 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_READ_EXTERNAL);
 
     }
-    private void toast(String a){
+    public void toast(String a){
 
-        Toast.makeText(this, a, Toast.LENGTH_SHORT).show();
+        Snackbar.make(MainActivity.coordinatorContent,a,Snackbar.LENGTH_SHORT).show();
     }
 
 
@@ -622,6 +631,7 @@ interface MainActivityConstants{
 
 
     static float TRANSLATION_THRESHOLD_PERCENTAGE=0.175f;
+    static float MUSIC_LIST_FRAME_PERCENT=0.73f;
     static final String IS_IN_ON_DESTROY="isInOnDestroy";
 
     //MORE TRANSLATIONY VALUE IN XML = LESSER SPACE OCCUPIED
