@@ -298,6 +298,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
         ref.setSeekBarMax(p);p/=1000;
         ref.getEndTime().setText((p / 60) + ":" + p % 60);
 
+
         if(ref.hasSavedStateBeenCalled) {//to play song from the point it was paused
             System.out.println("***SEEEKING***... VAL OF retrieved progress is "+ref.retrievedProgress);
             ref.hasSavedStateBeenCalled=false;
@@ -310,6 +311,8 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
 
 
         }
+        this.handleNotifButton(R.mipmap.pause);
+
 
 
     }
@@ -326,7 +329,6 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
         if(this.isPlaying()) {
             r = R.mipmap.play;
             ref.handleButtons(true,false);
-
             this.pause();
         }else{
             r= R.mipmap.pause;
@@ -342,6 +344,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     }
 
     public void handleNotifButton(int r){
+
         this.notificationMaker.setPlayPauseImg(r);
     }
 

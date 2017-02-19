@@ -57,7 +57,7 @@ public class NotificationMaker implements NotificationMakerConstants{
 
 
 
-        this.builder.setContentIntent(pendingIntent).setSmallIcon(R.mipmap.ic_launcher);
+        this.builder.setContentIntent(pendingIntent).setSmallIcon(R.mipmap.ic_launcher).setOngoing(true);
         this.builder.setContentTitle("AudFm");
         if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
             this.builder.setContent(this.remoteView);

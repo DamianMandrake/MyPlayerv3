@@ -283,10 +283,14 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
     public void handleButtons(boolean b,boolean shouldItDoAnything){
         System.out.println("************************** value of handle buttons is " + b);
         res= b?R.mipmap.play:R.mipmap.pause;
-
+        playPause.setBackgroundResource(res);
+        smallPlayPause.setBackgroundResource(res);
+        if(!shouldItDoAnything)
+            return;
         if(b) {
 
             System.out.println("inside true of handle buttons");
+
             if(musicService.isPlaying()) {//dont need to check whether or not player is prep'd since player is unprep'd when its not playing
                 System.out.println("about to pause the song");
                 musicService.pause();
@@ -300,8 +304,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
                 if(!musicService.isPlaying())//what if no songs set... or musicService is null... or songs running while my button shows play
                 musicService.startPlaying();
         }
-        playPause.setBackgroundResource(res);
-        smallPlayPause.setBackgroundResource(res);
+
 
     }
 
