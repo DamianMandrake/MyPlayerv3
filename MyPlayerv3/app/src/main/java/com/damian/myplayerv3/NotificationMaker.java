@@ -87,13 +87,18 @@ public class NotificationMaker implements NotificationMakerConstants{
     }
     private void setAlbumArt(final String bitmap){
         if(!previousSongPath.equals(bitmap)) {
+            Bitmap bmp= bitmap!=null? BitmapFactory.decodeFile(bitmap):null;
+            bmp= bmp==null? BitmapFactory.decodeResource(this.context.getResources(),R.drawable.notfound):bmp;
+
+
+
          /* new Thread(new Runnable() {
                 @Override
                 public void run() {*/
-                    NotificationMaker.this.remoteView.setImageViewBitmap(R.id.notiAlbumArt, BitmapFactory.decodeFile(bitmap));
+                    NotificationMaker.this.remoteView.setImageViewBitmap(R.id.notiAlbumArt, bmp);
                /* }
         });*/
-            this.previousSongPath=bitmap;
+            this.previousSongPath= bitmap!=null?bitmap:this.previousSongPath;
         }
 
 
