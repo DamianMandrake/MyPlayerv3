@@ -64,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
     static View coordinatorContent=null;
     static Context context;
     static File STORAGE_DIR;
+    private int tempNotiId;
 
     public SearchView searchView;
     public void setStorageDir(File f){
@@ -215,7 +216,6 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         setMaxTranslation(p - (int) (p * TRANSLATION_THRESHOLD_PERCENTAGE));
         setStorageDir(getApplicationContext().getCacheDir());
         coordinatorContent=findViewById(android.R.id.content);
-         notificationMaker=new NotificationMaker(this);
 
 
         try{
@@ -226,6 +226,9 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
             System.out.println("App started without call to onDestroy previously");
 
         }
+        notificationMaker=new NotificationMaker(this,this.tempNotiId);
+
+
 
         allSongsFragment = new AllSongsFragment();
         musicControllerFragment = new MusicControllerFragment();
@@ -323,6 +326,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
             resumeApp = true;
             editor.putBoolean(IS_IN_ON_DESTROY, resumeApp);
+            editor.putInt(NOTIFICATION_ID,this.notificationMaker.getNotificationId());
             editor.apply();
             musicControllerFragment.save(editor);
         }catch (Exception op){
@@ -336,6 +340,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
     void loadPreferences(){
         SharedPreferences sharedPreferences=getSharedPreferences("myPref",Context.MODE_PRIVATE);
         System.out.println("value of resumeApp is " + resumeApp);
+        this.tempNotiId=sharedPreferences.getInt(NOTIFICATION_ID,-1);
         resumeApp=sharedPreferences.getBoolean(IS_IN_ON_DESTROY,false);
 
     }
@@ -471,7 +476,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
                 MainActivity.this.tempList = new ArrayList<Song>();
                 for (Song so : MainActivity.songList)
-                    if (so.getTitle().toUpperCase().contains(s.toUpperCase()))
+                    if (so.getTitle().toUpperCase().contains(s.toUpperCase())||so.getArtist().toUpperCase().contains(s.toUpperCase()))
                         MainActivity.this.tempList.add(so);
 
 
@@ -641,9 +646,10 @@ interface MainActivityConstants{
 
 
 
-    static float TRANSLATION_THRESHOLD_PERCENTAGE=0.175f;
-    static float MUSIC_LIST_FRAME_PERCENT=0.73f;
+    static float TRANSLATION_THRESHOLD_PERCENTAGE=0.125f;
+    static float MUSIC_LIST_FRAME_PERCENT=0.78f;
     static final String IS_IN_ON_DESTROY="isInOnDestroy";
+    static final String NOTIFICATION_ID="notiId";
 
     //MORE TRANSLATIONY VALUE IN XML = LESSER SPACE OCCUPIED
 

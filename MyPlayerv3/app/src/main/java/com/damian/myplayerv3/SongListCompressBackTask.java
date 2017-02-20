@@ -193,13 +193,17 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
 
 
                 String path=null;
-                if(albumArtCursor.moveToFirst()){
-                    path=albumArtCursor.getString(albumArtCursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART));
-                    System.out.println("ALBUM NAME IS "+alName);
+                try {
+                    if (albumArtCursor.moveToFirst()) {
+                        path = albumArtCursor.getString(albumArtCursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART));
+                        System.out.println("ALBUM NAME IS " + alName);
                    /* if(path!=null) {
                         System.out.println("value of path is "+path);
                         path = compressAndGetFilePath(path, ba);
                     }*/
+                    }
+                }catch (NullPointerException npe){
+                    System.out.println("album art couldnt be parsed");
                 }
 
                 songList.add(new Song(tempId, t, a, path));

@@ -8,10 +8,10 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="80dp"
+        android:layout_height="?attr/actionBarSize"
         android:id="@+id/topSection"
         android:elevation="10dp"
-        android:background="@color/barRed"
+        android:background="@color/black"
         >
 
         <ImageView
@@ -78,13 +78,14 @@
 
 
     <FrameLayout android:id="@+id/imageViewContainer"
-        android:layout_height="400dp"
-        android:layout_width="fill_parent"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
         android:layout_below="@id/topSection"
+        android:layout_above="@+id/seekbarContainer"
         >
 
     <ImageView
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
 
         android:id="@+id/imageAlbumArt"
@@ -112,39 +113,45 @@
             />
 
         </FrameLayout>
+
+
     <FrameLayout android:id="@+id/seekbarContainer"
         android:layout_width="match_parent"
-        android:layout_below="@+id/imageViewContainer"
         android:layout_height="40dp"
-        android:background="@color/barRed"
-
+        android:layout_above="@+id/buttonPlaceholder"
+        android:background="@color/black"
         >
         <SeekBar
             android:layout_width="match_parent"
+            android:layout_marginLeft="40dp"
+            android:layout_marginRight="40dp"
             android:layout_height="30dp"
             android:layout_gravity="top"
             android:id="@+id/musicSeekbar"
             android:progressBackgroundTint="#FFF"
-            android:progressTint="#FFF"
+            android:progressTint="@color/barRed"
 
             />
         <TextView
+
             android:layout_width="35dp"
             android:layout_height="20dp"
             android:textSize="15dp"
-            android:layout_gravity="left|bottom"
+            android:layout_gravity="left|center_vertical"
             android:id="@+id/currentTime"
             android:textColor="#FFF"
+            android:paddingLeft="5dp"
+
             />
 
         <TextView
             android:layout_width="35dp"
             android:layout_height="20dp"
-            android:layout_gravity="right|bottom"
+            android:layout_gravity="right|center_vertical"
             android:textSize="15dp"
             android:id="@+id/endTime"
             android:textColor="#FFF"
-            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
 
 
             />
@@ -155,11 +162,13 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="?attr/actionBarSize"
         android:id="@+id/buttonPlaceholder"
+        android:layout_alignParentBottom="true"
 
-        android:background="@color/barRed"
-        android:layout_below="@+id/seekbarContainer"
+        android:background="@color/black"
+
+
         >
 
 
@@ -170,7 +179,7 @@
             android:id="@+id/prev"
             android:src="@mipmap/prev"
             android:layout_gravity="top|left"
-            android:background="@color/barRed"
+            android:background="@color/black"
 
             />
 
@@ -193,7 +202,7 @@
             android:id="@+id/nextSong"
             android:src="@mipmap/next"
             android:layout_gravity="top|right"
-            android:background="@color/barRed"
+            android:background="@color/black"
 
  />
 
@@ -205,27 +214,7 @@
 
     </FrameLayout>
 
-    <FrameLayout
-        android:layout_below="@+id/buttonPlaceholder"
-        android:layout_width="match_parent"
-        android:layout_height="80dp"
-        android:id="@+id/artistAndSongPlaceholder"
-        >
-    <TextView
-        android:layout_width="350dp"
-        android:layout_height="40dp"
-        android:textSize="30dp"
-        android:marqueeRepeatLimit="marquee_forever"
 
-        android:id="@+id/songName"
-        android:layout_gravity="left|top"
-        android:text=""
-        android:textColor="#FFF"
-
-
-        />
-
-    </FrameLayout>
 
 
 

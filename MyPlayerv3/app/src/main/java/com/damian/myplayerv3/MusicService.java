@@ -38,7 +38,11 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     static boolean isMediaPlayerPrepared=false;//true in onPrepared and false in onCompleted or in all other cases....
     static boolean isShuffleOn=false;
     private SharedPreferences.Editor mSharedPreferencesEditor;
+    private AudioManager audioManager;
+
     public NotificationMaker notificationMaker;
+
+
 
     //prolly really bad programming.... cant thuink of anything else right now
 
@@ -58,8 +62,17 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
         songPosition=0;
         mediaPlayer=new MediaPlayer();
         initMusicPlayer();
+        this.audioManager= (AudioManager)getSystemService(AUDIO_SERVICE);
+        boolean result=this.requestForFocus();
+        System.out.println("**********>>>>>>>>>>>>> PERMISSION WAS GIVE <<<<<<<<<<*********"+result);
 
 
+    }
+
+    private boolean requestForFocus(){
+        int res=this.audioManager.requestAudioFocus(new AudioFocusAdapter(this),AudioManager.STREAM_MUSIC,AudioManager.AUDIOFOCUS_GAIN);
+
+        return res==AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
 
     }
 
@@ -105,6 +118,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
 
         mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);// this lets the service run even when the device is locked
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+
 
         //setting the listeners for the MediaPlayer interfaces
 
@@ -255,7 +269,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
         ref=m;
     }
 
-
+    public MusicControllerFragment getRef(){return this.ref;}
 
 
 
@@ -325,19 +339,14 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     @Override
     public void handleButtons() {
         System.out.println("INSIDE HANDLE BUTTONS");
-        int r=0;
         if(this.isPlaying()) {
-            r = R.mipmap.play;
             ref.handleButtons(true,false);
             this.pause();
         }else{
-            r= R.mipmap.pause;
             ref.handleButtons(false,false);
-
-
             this.startPlaying();
         }
-        this.handleNotifButton(r);
+        //this.handleNotifButton(r);
 
 
 

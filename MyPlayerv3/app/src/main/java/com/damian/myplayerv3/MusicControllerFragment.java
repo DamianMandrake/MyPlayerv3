@@ -33,6 +33,8 @@ import android.os.Handler;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
@@ -67,6 +69,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
     private boolean isInTouch=false;public boolean hasSavedStateBeenCalled=false;
     private Song song;
     private int res;
+    private NumberFormat numberFormat;
 
     private View view;
 
@@ -174,8 +177,12 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
 
             int p = musicService.getPosition();
             seekBar.setProgress(p);
+            //System.out.println("VALUE OF P is " + p);
             int temp=p/1000;
-            progressTime.setText((temp / 60) + ":" + (temp % 60));
+            //System.out.println("TEMP IS "+temp);
+            //float time = temp/60 + (temp%60f) /100;
+            progressTime.setText((temp/60)+":"+MusicControllerFragment.this.numberFormat.format(temp%60));
+            //progressTime.setText(((int) ( temp/60 )) +((temp % 60f)/100) );
             handler.postDelayed(this, 1000);
 //            song.setCurrDuration(p);
         }
@@ -205,6 +212,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
         artist=(TextView)view.findViewById(R.id.artist);
         b=(Button)view.findViewById(R.id.repeater);
 
+        this.numberFormat= new DecimalFormat("00");
         playPause=(ToggleButton)view.findViewById(R.id.playPause);
         smallPlayPause=(ToggleButton)view.findViewById(R.id.smallPlayPlause);
         smallAlbumArt=(ImageView)view.findViewById(R.id.smallAlbumArt);
@@ -284,6 +292,8 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
         System.out.println("************************** value of handle buttons is " + b);
         res= b?R.mipmap.play:R.mipmap.pause;
         playPause.setBackgroundResource(res);
+        musicService.handleNotifButton(res);
+
         smallPlayPause.setBackgroundResource(res);
         if(!shouldItDoAnything)
             return;
@@ -313,7 +323,6 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
     public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
         System.out.println("onCheckedChanged called");
         handleButtons(b, true);
-        musicService.handleNotifButton(res);
 
 
 

@@ -10,6 +10,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.Icon;
 import android.os.Build;
 import android.os.NetworkOnMainThreadException;
+import android.support.v7.app.NotificationCompat;
 import android.widget.RemoteViews;
 
 /**
@@ -18,7 +19,7 @@ import android.widget.RemoteViews;
 public class NotificationMaker implements NotificationMakerConstants{
 
     private NotificationManager notificationManager;
-    private Notification.Builder builder;
+    private NotificationCompat.Builder builder;
     private RemoteViews remoteView;
     private int notificationId;
     private Context context;
@@ -29,6 +30,10 @@ public class NotificationMaker implements NotificationMakerConstants{
         this.initRemoteView();
         this.initNotiBuilder();
 
+    }
+    public NotificationMaker(Context context,int notiId){
+        this(context);
+        this.notificationId= notiId!=-1?notiId:this.notificationId;
     }
 
     private void initRemoteView(){
@@ -50,7 +55,7 @@ public class NotificationMaker implements NotificationMakerConstants{
     }
 
     private void initNotiBuilder(){
-        this.builder=new Notification.Builder(this.context);
+        this.builder=new NotificationCompat.Builder(this.context);
         //making default intent to redirect to main activoty
         PendingIntent pendingIntent= PendingIntent.getActivity(this.context,123,new Intent(this.context,MainActivity.class),0);
 
@@ -59,9 +64,7 @@ public class NotificationMaker implements NotificationMakerConstants{
 
         this.builder.setContentIntent(pendingIntent).setSmallIcon(R.mipmap.ic_launcher).setOngoing(true);
         this.builder.setContentTitle("AudFm");
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
-            this.builder.setContent(this.remoteView);
-        else
+
             this.builder.setCustomBigContentView(this.remoteView);
 
         System.out.println("LEAVING initNotiBuilder");
@@ -121,6 +124,8 @@ public class NotificationMaker implements NotificationMakerConstants{
         this.makeNotification();
 
     }
+
+    public int getNotificationId(){return this.notificationId;}
 
 
 
