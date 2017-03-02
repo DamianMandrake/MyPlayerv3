@@ -1,24 +1,21 @@
-package com.damian.myplayerv3;
+package com.damian.myplayerv3.AdaptersAndListeners;
 
 
-        import android.app.Activity;
         import android.content.Context;
         import android.graphics.Bitmap;
         import android.graphics.BitmapFactory;
-        import android.graphics.drawable.Drawable;
         import android.os.AsyncTask;
-        import android.support.v4.view.MenuItemCompat;
         import android.support.v7.widget.RecyclerView;
         import android.view.LayoutInflater;
         import android.view.View;
         import android.view.ViewGroup;
         import android.widget.ImageView;
         import android.widget.TextView;
-        import android.widget.Toast;
 
-        import java.io.FileInputStream;
-        import java.io.IOException;
-        import java.lang.reflect.Array;
+        import com.damian.myplayerv3.MainActivity;
+        import com.damian.myplayerv3.R;
+        import com.damian.myplayerv3.Song;
+
         import java.util.ArrayList;
 
 /**
@@ -28,14 +25,12 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
 
     private Context ctx;
     private ArrayList<Song> songList;
-    private MainActivity activity;
-    private Song tempSong;
+    private static Song currSong;
     static private PlaySong playSong;//reference obj... is static since i have to reference this from the inner class
 
-    public SongRecycler(MainActivity activity,Context c, ArrayList a){
+    public SongRecycler(Context c, ArrayList a){
         ctx=c;this.songList=new ArrayList<Song>();
         this.initSongList(a);
-        this.activity=(MainActivity)activity;
         System.out.println("INSIDE CTOR OF SOngRecycyler");
 
 
@@ -60,10 +55,10 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
     public void onBindViewHolder(final SongViewHolder holder, int position) {
         System.out.println("Inside onBindViewHolder");
 
-        final Song currSong=songList.get(position);
+        currSong=songList.get(position);
         System.out.println("binding "+currSong.getTitle());
         if(currSong.getLargeImgPath()!=null) {
-            SongViewHolder.getFromList.setCurrSong(position);
+            //SongViewHolder.getFromList.setCurrSong(position);
             System.out.println("imgPath of " + currSong.getTitle() + " IS " + currSong.getLargeImgPath());
 
 
@@ -76,7 +71,7 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
                 @Override
                 protected Bitmap doInBackground(RecyclerView.ViewHolder... viewHolders) {
                     v=viewHolders[0];
-                    return BitmapFactory.decodeFile(SongViewHolder.getFromList.getCurrSongImgPath());//since inner cant access outer
+                    return BitmapFactory.decodeFile(SongRecycler.currSong.getLargeImgPath());//since inner cant access outer
 
 
 
@@ -139,7 +134,7 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
 
 
 
-        SongViewHolder(View view,ArrayList<Song> arrayList,Context c){
+        public SongViewHolder(View view,ArrayList<Song> arrayList,Context c){
             super(view);
             System.out.println("****IN CTOR OF SONGVIEWHOLDER");
             view.setOnClickListener(this);
@@ -170,16 +165,17 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
 
     }
 
-     interface PlaySong{
+    public interface PlaySong{
          public void play(int position);
          public void play(Song s );
     }
-    interface GetFromList{
+
+
+
+    public interface GetFromList{
         public void setCurrSong(int p);
         public String getCurrSongImgPath();
     }
-
-
 
 
 

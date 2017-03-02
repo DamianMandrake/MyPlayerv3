@@ -5,24 +5,26 @@ package com.damian.myplayerv3;
         import android.content.ContentUris;
         import android.content.Context;
         import android.content.Intent;
+        import android.content.IntentFilter;
         import android.content.ServiceConnection;
         import android.content.SharedPreferences;
         import android.media.AudioManager;
         import android.media.MediaPlayer;
         import android.net.Uri;
         import android.os.Binder;
-        import android.os.Handler;
         import android.os.IBinder;
-        import android.os.Parcel;
-        import android.os.Parcelable;
         import android.os.PowerManager;
         import android.provider.MediaStore;
         import android.support.annotation.Nullable;
 
+        import com.damian.myplayerv3.AdaptersAndListeners.AudioFocusAdapter;
+        import com.damian.myplayerv3.AdaptersAndListeners.BroadcastListener;
+        import com.damian.myplayerv3.Fragments.MusicControllerFragment;
+
         import java.io.IOException;
         import java.util.ArrayList;
         import java.util.concurrent.ThreadLocalRandom;
-
+import com.damian.myplayerv3.NotificationMaker;
 /**
  * Created by Damian on 12/30/2016.
  */
@@ -33,12 +35,18 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     private int songPosition;// song position will be used to restore state once app is restarted
     private final MusicBinder musicBinder=new MusicBinder();
     private MusicControllerFragment ref;
-    static int repeatState=0;//0 is normal,1 is repeat once,2 is repeat infinitely
+
+    public static int repeatState=0;//0 is normal,1 is repeat once,2 is repeat infinitely
+
     private boolean playCount;
-    static boolean isMediaPlayerPrepared=false;//true in onPrepared and false in onCompleted or in all other cases....
-    static boolean isShuffleOn=false;
+
+    public static boolean isMediaPlayerPrepared=false;//true in onPrepared and false in onCompleted or in all other cases....
+    public static boolean isShuffleOn=false;
+
     private SharedPreferences.Editor mSharedPreferencesEditor;
     private AudioManager audioManager;
+    private BroadcastListener broadcastRecevier;
+
 
     public NotificationMaker notificationMaker;
 
@@ -62,6 +70,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
         songPosition=0;
         mediaPlayer=new MediaPlayer();
         initMusicPlayer();
+        this.registerBroadcastService();
         this.audioManager= (AudioManager)getSystemService(AUDIO_SERVICE);
         boolean result=this.requestForFocus();
         System.out.println("**********>>>>>>>>>>>>> PERMISSION WAS GIVE <<<<<<<<<<*********"+result);
@@ -70,7 +79,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     }
 
     private boolean requestForFocus(){
-        int res=this.audioManager.requestAudioFocus(new AudioFocusAdapter(this),AudioManager.STREAM_MUSIC,AudioManager.AUDIOFOCUS_GAIN);
+        int res=this.audioManager.requestAudioFocus(new AudioFocusAdapter(this), AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 
         return res==AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
 
@@ -111,6 +120,9 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
         super.onTaskRemoved(rootIntent);
         System.out.println(inTaskRemoved);
         this.notificationMaker.dismissNotif();
+        this.unregisterBroadcastService();
+        //this.removeBroadcastReceiver.unregisterBroadcastService();
+
         ref.save(mSharedPreferencesEditor);
     }
 
@@ -141,7 +153,6 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
             return true;
         }
     }
-    public MediaPlayer getMediaPlayer(){return mediaPlayer;}
 
 
     public class MusicBinder extends Binder{
@@ -243,7 +254,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
 
         playSong();
     }
-
+    @Override
     public void onTouchNext(){
         playCount=false;
         int repeatButtonStatus=repeatState;
@@ -254,6 +265,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
 
 
     }
+    @Override
     public void onTouchPrev(){
         playCount=false;
         int repeatButtonStatus=repeatState;
@@ -293,7 +305,11 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-        playNext();isMediaPlayerPrepared=false;
+        try{
+        playNext();}catch (ArithmeticException er){
+
+        }
+            isMediaPlayerPrepared=false;
     }
 
     @Override
@@ -332,6 +348,11 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     }
 
 
+    public void callRefHandle(boolean a,boolean b){
+        if(ref!=null)
+        ref.handleButtons(a,b);
+    }
+
 
     //BroadcastListener.songcontroller methods
 
@@ -340,16 +361,22 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     public void handleButtons() {
         System.out.println("INSIDE HANDLE BUTTONS");
         if(this.isPlaying()) {
-            ref.handleButtons(true,false);
-            this.pause();
+            ref.handleButtons(true, true);
         }else{
-            ref.handleButtons(false,false);
-            this.startPlaying();
+            ref.handleButtons(false,true);
         }
-        //this.handleNotifButton(r);
 
 
 
+    }
+    @Override
+    public void resumeSong(){
+        this.startPlaying();
+    }
+
+    @Override
+    public boolean isPaused(){
+        return this.isPlaying();
     }
 
     public void handleNotifButton(int r){
@@ -357,16 +384,19 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
         this.notificationMaker.setPlayPauseImg(r);
     }
 
-    @Override
-    public void next() {
-        System.out.println("IN NEXT");
-        this.playNext();
+    private void registerBroadcastService(){
+        this.broadcastRecevier=new BroadcastListener();
+        getApplicationContext().registerReceiver(this.broadcastRecevier, new IntentFilter(Intent.ACTION_HEADSET_PLUG));
     }
 
-    @Override
-    public void prev() {
-        this.playPrevious();
+    public void unregisterBroadcastService(){
+        getApplicationContext().unregisterReceiver(this.broadcastRecevier);
     }
+
+
+
+
+
 }
 interface MusicServiceConstants{
      static final byte PLAY_NORMALLY=0,REPEAT_ONCE=1,REPEAT_INFINITELY=2;

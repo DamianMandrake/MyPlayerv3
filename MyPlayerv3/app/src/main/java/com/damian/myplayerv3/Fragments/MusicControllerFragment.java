@@ -1,20 +1,12 @@
-package com.damian.myplayerv3;
+package com.damian.myplayerv3.Fragments;
 
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.Image;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Looper;
-import android.support.annotation.MainThread;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,19 +22,20 @@ import android.widget.ToggleButton;
 import android.os.Handler;
 
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.damian.myplayerv3.MainActivity;
+import com.damian.myplayerv3.MusicService;
+import com.damian.myplayerv3.R;
+import com.damian.myplayerv3.Song;
+import com.damian.myplayerv3.AdaptersAndListeners.SongRecycler;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Map;
 
 /**
  * Created by damianmandrake on 1/12/17.
  */
-public class MusicControllerFragment extends Fragment implements CompoundButton.OnCheckedChangeListener,View.OnClickListener,MusicControllerFragmentConstants,SongRecycler.PlaySong{
+public class MusicControllerFragment extends Fragment implements CompoundButton.OnCheckedChangeListener,View.OnClickListener,MusicControllerFragmentConstants,SongRecycler.PlaySong {
 
 
 
@@ -57,6 +50,8 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
 
 
     */
+
+    public static boolean didUserTrigger=false;
 
     private TextView smallSongTitle,artist,progressTime,endTime;
     private ImageView smallAlbumArt,imageAlbumArt;
@@ -74,7 +69,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
     private View view;
 
      int progress;//this is for the seekbar
-    int retrievedProgress;//this is for loadLastSong();
+    public int retrievedProgress;//this is for loadLastSong();
 
 
     private int songPos;//songPOs is for reloadState only
@@ -283,7 +278,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
         return view;
     }
     void toast(String a){
-        Snackbar.make(MainActivity.coordinatorContent,a,Snackbar.LENGTH_SHORT).show();
+        MainActivity.toast(a);
 
 
     }
@@ -304,6 +299,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
             if(musicService.isPlaying()) {//dont need to check whether or not player is prep'd since player is unprep'd when its not playing
                 System.out.println("about to pause the song");
                 musicService.pause();
+                MusicControllerFragment.didUserTrigger=true;
             }
             saveLastSong();
         }else{
@@ -312,7 +308,10 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
                     return;
                 if(shouldItDoAnything)
                 if(!musicService.isPlaying())//what if no songs set... or musicService is null... or songs running while my button shows play
-                musicService.startPlaying();
+                {
+                    musicService.startPlaying();
+                    didUserTrigger=false;
+                }
         }
 
 

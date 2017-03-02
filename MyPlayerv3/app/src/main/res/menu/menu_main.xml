@@ -5,10 +5,16 @@
 
     <item
         android:id="@+id/actionSearch"
-        android:title="Search"
+        android:title="@string/search"
         app:actionViewClass="android.support.v7.widget.SearchView"
         app:showAsAction="ifRoom"
         android:icon="@mipmap/search"
 
+        />
+
+    <item
+        android:id="@+id/actionCreatePlaylist"
+        android:title="@string/create_playlist"
+        app:showAsAction="never"
         />
 </menu>

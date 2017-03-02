@@ -1,28 +1,22 @@
-package com.damian.myplayerv3;
+package com.damian.myplayerv3.BackgroundTasks;
 
-import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
-import android.os.Looper;
 import android.provider.MediaStore;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import com.damian.myplayerv3.Fragments.MusicControllerFragment;
+import com.damian.myplayerv3.MainActivity;
+import com.damian.myplayerv3.Song;
+import com.damian.myplayerv3.StoreList;
+
 import java.util.ArrayList;
+
+import com.damian.myplayerv3.MainActivity;
 
 /**
  * Created by damianmandrake on 1/6/17.
@@ -64,7 +58,7 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
 
 
 
-    SongListCompressBackTask(MainActivity a){
+    public SongListCompressBackTask(MainActivity a){
         songList=new ArrayList<Song>();
         activity=a;
         musicResolver=a.getContentResolver();
@@ -134,7 +128,7 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
 
     private void writeListToStorage(){
 
-        StoreList storeList = new StoreList(SongListCompressBackTask.this.songList, MusicControllerFragment.SONG_LIST);
+        StoreList storeList = new StoreList(SongListCompressBackTask.this.songList, MusicControllerFragment.SONG_LIST,false);
         storeList.writeArrayList();
     }
 

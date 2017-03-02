@@ -12,33 +12,25 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 
-import android.content.res.Resources;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
-import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
-import android.text.Editable;
-import android.text.Layout;
-import android.text.method.KeyListener;
-import android.util.DisplayMetrics;
 import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -48,27 +40,42 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import android.support.v7.widget.ListPopupWindow;
+
+import com.damian.myplayerv3.AdaptersAndListeners.CustomAdapter;
+import com.damian.myplayerv3.AdaptersAndListeners.FrameOnTouchListener;
+import com.damian.myplayerv3.AdaptersAndListeners.SongRecycler;
+import com.damian.myplayerv3.Fragments.AllSongsFragment;
+import com.damian.myplayerv3.Fragments.MusicControllerFragment;
+import com.damian.myplayerv3.Fragments.NavigationFragment;
+import com.damian.myplayerv3.Fragments.PlaylistFrag;
+import com.damian.myplayerv3.Fragments.PopupDialogFrag;
+import com.damian.myplayerv3.Fragments.StreamerFragment;
 
 import java.io.File;
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements MainActivityConstants,SongRecycler.GetFromList {
+public class MainActivity extends AppCompatActivity implements MainActivityConstants,SongRecycler.GetFromList,FrameOnTouchListener.ToggleNavDrawerDrawable,NavigationFragment.FragmentSwapper,PlaylistFrag.SetSongs {
 
 
-    static int MAX_TRANSLATION;
-    static int MAX_WINDOW_HEIGHT=0;
-    static int MAX_MUSIC_FRAME_SIZE=0;
+
+    public static int MAX_TRANSLATION;
+    public static int MAX_WINDOW_HEIGHT=0;
+    public static int MAX_MUSIC_FRAME_SIZE=0;
     static View coordinatorContent=null;
-    static Context context;
-    static File STORAGE_DIR;
+    public static Context context;
+    public static File STORAGE_DIR,PLAYLIST_DIR;
     private int tempNotiId;
-
     public SearchView searchView;
     public void setStorageDir(File f){
         STORAGE_DIR=f;
+
+        PLAYLIST_DIR=new File(MainActivity.STORAGE_DIR.getAbsolutePath()+"/playlists/");
+        System.out.println(PLAYLIST_DIR.getAbsolutePath());
+
+
+
 
     }
 
@@ -82,11 +89,13 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
     }
 
     private Button b;
-    static boolean resumeApp=false;
+    static public boolean resumeApp=false;
 
     public AllSongsFragment allSongsFragment;
     public MusicControllerFragment musicControllerFragment;//since this has to be accessed by all other classes in the program
-
+    public NavigationFragment navigationFragment;
+    public PlaylistFrag playlistFrag;
+    public StreamerFragment streamerFragment;
 
     public ProgressDialog progressDialog;
     //public TextView myAppBar;
@@ -95,8 +104,9 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
     private MusicService musicService;
     private Intent musicPlayerIntent;
-    static boolean isPlayerBound=false;
-    private FrameLayout frameLayout,musicListFrame;
+    public static boolean isPlayerBound=false;
+    private FrameLayout frameLayout,musicListFrame,navigationFrame;
+    private DrawerLayout drawerLayout;
     private android.support.v4.app.FragmentManager fragmentManager;
     private android.support.v4.app.FragmentTransaction fragmentTransaction;
 
@@ -177,7 +187,11 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
     };
 
 
+    @Override
+    public void setMusicServiceList(ArrayList<Song> songs){
+        this.musicService.setSongsList(songs);
 
+    }
 
 
     @Override
@@ -197,7 +211,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
     }
 
-
+    public static int SCREEN_HEIGHT=0;
 
 
     @Override
@@ -210,12 +224,16 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         setContentView(R.layout.activity_main);
         context=this;
         int p=this.getResources().getDisplayMetrics().heightPixels;
+        SCREEN_HEIGHT=p;
         System.out.println("HEIGHT OF SCREEN IS "+p);
         MAX_WINDOW_HEIGHT= (int)(p*0.30);
         MAX_MUSIC_FRAME_SIZE=(int)(p*MUSIC_LIST_FRAME_PERCENT);
         setMaxTranslation(p - (int) (p * TRANSLATION_THRESHOLD_PERCENTAGE));
         setStorageDir(getApplicationContext().getCacheDir());
+
         coordinatorContent=findViewById(android.R.id.content);
+        PlaylistFrag.setSetSongs(this);
+
 
 
         try{
@@ -232,10 +250,13 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
         allSongsFragment = new AllSongsFragment();
         musicControllerFragment = new MusicControllerFragment();
+        streamerFragment=new StreamerFragment();
+        navigationFragment=new NavigationFragment();navigationFragment.setFragmentSwapper(this);
+        playlistFrag=new PlaylistFrag();
 
-                System.out.println("VALUE OF resumeApp is "+resumeApp);
+                System.out.println("VALUE OF resumeApp is " + resumeApp);
         if(resumeApp){
-            StoreList storeList=new StoreList(MusicControllerFragmentConstants.SONG_LIST);
+            StoreList storeList=new StoreList(MusicControllerFragment.SONG_LIST,false);
             songList=storeList.readArrayList();
             if(songList==null) {
                 resumeApp = false;
@@ -256,11 +277,14 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
             if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
                 System.out.println(" permissions had been granted before about to start async");
+                if(!PLAYLIST_DIR.exists())
+                    System.out.println("folder of playlists was created " + PLAYLIST_DIR.mkdirs());
                 b.setVisibility(View.INVISIBLE);
                 allSongsFragment.setBackTaskAndExecute(this);
                 setFramesVisible();
                 initBotFrag();
-                initOtherFrag(allSongsFragment);
+                initOtherFrag(musicListFrame.getId(), allSongsFragment);
+                initOtherFrag(navigationFrame.getId(),navigationFragment);
 
 
 
@@ -274,7 +298,6 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
             }
         }
-        //this takes 2 onclick listeners
 
 
 
@@ -289,6 +312,10 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         toolbar.setTitle(getResources().getString(R.string.app_name));
         this.setSupportActionBar(this.toolbar);
         System.out.println("toolbar height is " + toolbar.getHeight());
+
+
+        this.drawerLayout=(DrawerLayout)findViewById(R.id.drawerLayout);
+        this.navigationFrame=(FrameLayout)findViewById(R.id.navFragHolder);
 
 
         frameLayout=(FrameLayout)findViewById(R.id.musicControllerFragPlaceholder);
@@ -316,6 +343,8 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         b=(Button)findViewById(R.id.permButton);
 
     }
+
+
 
     void savePreferences(){
         try {
@@ -362,58 +391,41 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         System.out.println("inside initBotFrag");
 
         fragmentTransaction=fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.musicControllerFragPlaceholder,musicControllerFragment);
+        fragmentTransaction.replace(R.id.musicControllerFragPlaceholder, musicControllerFragment);
         fragmentTransaction.commit();
 
-        frameLayout.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch (motionEvent.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        previousY = motionEvent.getY();
+        FrameOnTouchListener f=new FrameOnTouchListener(this.musicControllerFragment);
+        f.setNavDrawerDrawable(this);
+        frameLayout.setOnTouchListener(f);
 
-                        return true;
-
-                    case MotionEvent.ACTION_MOVE:
-                        float currentY = motionEvent.getY();
-                        diff = previousY - currentY;
-                        trans = view.getTranslationY();
-                        trans -= diff;
-
-                        trans = trans < 0 ? 0 : (trans > MAX_TRANSLATION ? MAX_TRANSLATION : trans);
-
-                        view.setTranslationY(trans);
-
-                        return true;
-
-                    case MotionEvent.ACTION_UP:
-
-                        if (diff < 0) {
-                            view.setTranslationY(MAX_TRANSLATION);
-                            musicControllerFragment.smallPlayPause.setVisibility(View.VISIBLE);
-                        } else if (diff > 0) {
-                            view.setTranslationY(0);
-                            musicControllerFragment.smallPlayPause.setVisibility(View.INVISIBLE);
-                        }
-
-
-                        return true;
-
-
-                }
-
-                return view.onTouchEvent(motionEvent);
-
-            }
-        });
 
     }
-    private void initOtherFrag(Fragment f){
+    //overriding FragmentSwapper funcs
+    @Override
+    public void initOtherFrag(int frameId,Fragment f){
         fragmentTransaction =fragmentManager.beginTransaction();
-        fragmentTransaction.replace(musicListFrame.getId(), f);
+        fragmentTransaction.replace(frameId, f);
         fragmentTransaction.commit();
 
     }
+    @Override
+    public void closeDrawerLayout(){
+        this.drawerLayout.closeDrawers();
+    }
+    @Override
+    public Fragment getFragment(int i){
+        switch (i){
+            case 0:
+                return this.allSongsFragment;
+            case 1:
+                return this.playlistFrag;//replace with playlist
+            case 2:
+                return this.streamerFragment;//replace with soundcloud fragment
+
+        }
+        return null;
+    }
+
 
 
     @Override
@@ -454,7 +466,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         this.listPopupWindow.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Song s=(MainActivity.this.tempList.get(i));
+                Song s = (MainActivity.this.tempList.get(i));
                 MainActivity.this.musicControllerFragment.play(s);
                 MainActivity.this.musicService.setSongPosition(MainActivity.songList.indexOf(s));
                 MainActivity.this.listPopupWindow.dismiss();
@@ -476,7 +488,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
                 MainActivity.this.tempList = new ArrayList<Song>();
                 for (Song so : MainActivity.songList)
-                    if (so.getTitle().toUpperCase().contains(s.toUpperCase())||so.getArtist().toUpperCase().contains(s.toUpperCase()))
+                    if (so.getTitle().toUpperCase().contains(s.toUpperCase()) || so.getArtist().toUpperCase().contains(s.toUpperCase()))
                         MainActivity.this.tempList.add(so);
 
 
@@ -531,6 +543,11 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
+        switch (id){
+            case R.id.actionCreatePlaylist:
+                this.showPlaylistDialog();
+                break;
+        }
 
         //noinspection SimplifiableIfStatement
 
@@ -538,6 +555,14 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         return super.onOptionsItemSelected(item);
     }
 
+
+    private void showPlaylistDialog(){
+        if(this.fragmentManager!=null) {
+            PopupDialogFrag popupDialogFrag = PopupDialogFrag.getInstance("Create Playlist");
+            popupDialogFrag.show(this.fragmentManager,"playlist");
+        }
+
+    }
 
 
 
@@ -557,8 +582,9 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         System.out.println("about to get into activity compat");
         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_READ_EXTERNAL);
 
+
     }
-    public void toast(String a){
+    public static void toast(String a){
 
         Snackbar.make(MainActivity.coordinatorContent,a,Snackbar.LENGTH_SHORT).show();
     }
@@ -583,7 +609,8 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
                     allSongsFragment.setBackTaskAndExecute(this);
                     initBotFrag();
-                    initOtherFrag(allSongsFragment);
+                    initOtherFrag(musicListFrame.getId(), allSongsFragment);
+                    initOtherFrag(navigationFrame.getId(),navigationFragment);
                     setFramesVisible();
 
                 }
@@ -630,6 +657,15 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         }
     }
 
+    //overriding navDrawerToggle
+    @Override
+    public void toggleNavDrawerDrawable(boolean b){
+        int shouldItToggle= b? DrawerLayout.LOCK_MODE_UNLOCKED:DrawerLayout.LOCK_MODE_LOCKED_CLOSED;
+        drawerLayout.setDrawerLockMode(shouldItToggle);
+
+
+    }
+
 
 
 
@@ -644,12 +680,14 @@ interface MainActivityConstants{
     static final File externalParentDir=new File(externalStoragePath);
     */
 
-
+    static final File DOWNLOADS_DIRECTORY=(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS));
 
     static float TRANSLATION_THRESHOLD_PERCENTAGE=0.125f;
     static float MUSIC_LIST_FRAME_PERCENT=0.78f;
     static final String IS_IN_ON_DESTROY="isInOnDestroy";
     static final String NOTIFICATION_ID="notiId";
+    static final int MY_INTERNET=44;
+
 
     //MORE TRANSLATIONY VALUE IN XML = LESSER SPACE OCCUPIED
 

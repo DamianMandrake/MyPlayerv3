@@ -14,7 +14,7 @@ public class Song implements Serializable{
     private String title,artist;
     private String imgPath;
     private String largeImgPath;
-
+    private boolean isSelected;//for playlists
 
 
     public Song(long x,String t,String p){
@@ -22,6 +22,7 @@ public class Song implements Serializable{
         title=t;
         artist=p;
         imgPath=null;
+        this.isSelected=false;
 
     }
     public Song(long x, String t, String p,String l){
@@ -44,6 +45,10 @@ public class Song implements Serializable{
         return "Song {title="+getTitle()+",artist="+getArtist()+",imgPath="+getImgPath()+",largeImgPath="+getLargeImgPath()+
                ",id="+getId()+"}";
     }
+
+
+    public void setSelected(boolean b){this.isSelected=b;}
+    public boolean getIsSelected(){return this.isSelected;}
 
 
 

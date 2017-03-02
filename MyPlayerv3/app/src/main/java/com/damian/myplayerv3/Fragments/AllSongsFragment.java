@@ -1,4 +1,4 @@
-package com.damian.myplayerv3;
+package com.damian.myplayerv3.Fragments;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -10,7 +10,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.damian.myplayerv3.AdaptersAndListeners.RecyclerScrollListener;
+import com.damian.myplayerv3.MainActivity;
+import com.damian.myplayerv3.R;
+import com.damian.myplayerv3.Song;
+import com.damian.myplayerv3.BackgroundTasks.SongListCompressBackTask;
+import com.damian.myplayerv3.AdaptersAndListeners.SongRecycler;
 import java.util.ArrayList;
+
 
 /**
  * Created by damianmandrake on 1/17/17.
@@ -22,6 +29,8 @@ public class AllSongsFragment extends Fragment {
     private SongListCompressBackTask backTask;
     private Context context;
     private SongRecycler songRecycler;
+    private RecyclerScrollListener recyclerScrollListener;
+
 
 
 
@@ -40,6 +49,11 @@ public class AllSongsFragment extends Fragment {
         return view;
     }
 
+    public void setRecyclerView(RecyclerScrollListener s){
+        this.recyclerScrollListener=s;
+        //this.recyclerView.addOnScrollListener(this.recyclerScrollListener);
+    }
+
     public void setBackTaskAndExecute(MainActivity a){
         backTask=new SongListCompressBackTask(a);
         backTask.execute();
@@ -53,10 +67,12 @@ public class AllSongsFragment extends Fragment {
 
         if(recyclerView!=null) {
             System.out.println("recycler view is NOT NULL");
-            this.songRecycler = new SongRecycler((MainActivity)getActivity(),context, s);
+            this.songRecycler = new SongRecycler(context, s);
             this.songRecycler.setPlaySongReference(((MainActivity) getActivity()).musicControllerFragment);
             this.recyclerView.setAdapter(songRecycler);
             this.recyclerView.setLayoutManager(new LinearLayoutManager(context));
+
+            if(this.recyclerScrollListener!=null)this.recyclerView.addOnScrollListener(this.recyclerScrollListener);
             this.recyclerView.setVisibility(View.VISIBLE);
 
         }

@@ -1,31 +1,51 @@
-package com.damian.myplayerv3;
+package com.damian.myplayerv3.AdaptersAndListeners;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
+import com.damian.myplayerv3.R;
+import com.damian.myplayerv3.Song;
+
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Created by damianmandrake on 2/18/17.
  */
 public class CustomAdapter extends BaseAdapter {
 
-    private ArrayList<Song> arrayList;
+    private ArrayList arrayList;
     private int resourceId;
     private LayoutInflater layoutInflater;
+    private boolean textColorWhite=false;//tells me which ctor was called since im using this in both navddrawer and listpopup window
+
     public CustomAdapter(ArrayList<Song> songs,Context context,int resId){
+        this(context,resId);
+        this.arrayList=new ArrayList<>();
         this.arrayList=songs;
-        this.resourceId=resId;
+        this.textColorWhite=false;
+
+
+    }
+
+    public CustomAdapter(String arr[],Context context,int resourceId){
+        this(context,resourceId);
+        this.arrayList=new ArrayList<String>(Arrays.asList(arr));
+        this.textColorWhite=true;
+
+
+    }
+    private CustomAdapter(Context context,int resourceId){
+        this.resourceId=resourceId;
         this.layoutInflater=LayoutInflater.from(context);
         System.out.println("LEAVING CTOR OF CUSTOM ADAPTER");
     }
-
 
 
     @Override
@@ -34,7 +54,7 @@ public class CustomAdapter extends BaseAdapter {
     }
 
     @Override
-    public Song getItem(int i) {
+    public Object getItem(int i) {
         return this.arrayList.get(i);
     }
 
@@ -58,8 +78,22 @@ public class CustomAdapter extends BaseAdapter {
         }else
         viewHolder=(ViewHolder)row.getTag();
 
-        viewHolder.textView.setText(this.getItem(i).getTitle());
-        System.out.println(this.getItem(i).getTitle());
+        Object obj=this.getItem(i);
+        String x="";
+        if(textColorWhite){
+            viewHolder.textView.setTextColor(Color.WHITE);
+            x = obj.toString();
+
+        }else
+            x= ((Song)obj).getTitle();
+
+
+
+
+
+
+        viewHolder.textView.setText(x);
+        System.out.println(x);
 
         return row;
     }

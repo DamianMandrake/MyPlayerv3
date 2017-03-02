@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:paddingRight="10dp"
+    android:paddingLeft="10dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp"
+    >
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+    <ImageView
+        android:layout_width="180dp"
+        android:layout_height="180dp"
+        android:id="@+id/playlistImageView"
+        />
+    <TextView
+        android:layout_below="@+id/playlistImageView"
+        android:layout_width="wrap_content"
+        android:layout_height="31dp"
+        android:singleLine="true"
+        android:textSize="25dp"
+        android:id="@+id/playlistText"
+        android:layout_centerHorizontal="true"
+
+        />
+    </RelativeLayout>
+
+</LinearLayout>

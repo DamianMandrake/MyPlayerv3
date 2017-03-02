@@ -19,16 +19,17 @@ public class StoreList {
     private ObjectOutputStream oout;
     private File file;
     private boolean b;
+    private boolean isPlaylist;
 
-    public StoreList(ArrayList a,String fileName){
-        this(fileName);
+    public StoreList(ArrayList a,String fileName,boolean isPlaylist){
+        this(fileName,isPlaylist);
         b=true;
         this.arrayList=a;
         System.out.println("The current storage dir is "+file.getAbsolutePath());
 
     }
-    public StoreList(String fileName){
-        this.file=new File(MainActivity.STORAGE_DIR,fileName);
+    public StoreList(String fileName,boolean isPlaylist){
+        this.file= isPlaylist?new File(MainActivity.PLAYLIST_DIR,fileName):new File(MainActivity.STORAGE_DIR,fileName);
         b=false;
 
     }
