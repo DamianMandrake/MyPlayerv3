@@ -17,7 +17,7 @@ public class ClientSocket implements Runnable {
 
 
 
-    private String ip;
+    static String ip;
     static int port=4444;
     private Thread thread;
     private InputStreamThread inputStreamThread;

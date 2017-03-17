@@ -42,8 +42,7 @@ public class Song implements Serializable{
 
     @Override
     public String toString(){
-        return "Song {title="+getTitle()+",artist="+getArtist()+",imgPath="+getImgPath()+",largeImgPath="+getLargeImgPath()+
-               ",id="+getId()+"}";
+        return "{title="+getTitle()+",artist="+getArtist()+",largeImgPath="+getLargeImgPath()+ ",id="+getId()+"}";
     }
 
 

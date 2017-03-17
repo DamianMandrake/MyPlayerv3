@@ -139,7 +139,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
         mediaPlayer.setOnPreparedListener(this);
     }
     public void setSongsList(ArrayList<Song> s) {
-        songsList=s;
+        songsList=s;this.songPosition=0;
     }
 
     public boolean isListEmpty(){
@@ -162,8 +162,9 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     }
     public ArrayList getSongList(){return songsList;}
     public void playSong(){
-
-            Song toBePlayed = songsList.get(songPosition);
+            int pos=0;
+            if(this.songPosition!=-1)   pos=songPosition;
+                Song toBePlayed = songsList.get(pos);
             System.out.println("playing " + toBePlayed.getTitle());
 
             notificationMaker.setAll(toBePlayed.getLargeImgPath(),toBePlayed.getTitle(),toBePlayed.getArtist());

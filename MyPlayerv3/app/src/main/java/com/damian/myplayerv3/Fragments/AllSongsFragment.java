@@ -55,7 +55,7 @@ public class AllSongsFragment extends Fragment {
     }
 
     public void setBackTaskAndExecute(MainActivity a){
-        backTask=new SongListCompressBackTask(a);
+        backTask=new SongListCompressBackTask(a,!MainActivity.resumeApp);
         backTask.execute();
 
 
@@ -68,7 +68,7 @@ public class AllSongsFragment extends Fragment {
         if(recyclerView!=null) {
             System.out.println("recycler view is NOT NULL");
             this.songRecycler = new SongRecycler(context, s);
-            this.songRecycler.setPlaySongReference(((MainActivity) getActivity()).musicControllerFragment);
+            //this.songRecycler.setPlaySongReference(((MainActivity) getActivity()).musicControllerFragment);
             this.recyclerView.setAdapter(songRecycler);
             this.recyclerView.setLayoutManager(new LinearLayoutManager(context));
 

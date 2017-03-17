@@ -34,7 +34,7 @@ public class StreamerRecyclerAdapter extends RecyclerView.Adapter<StreamerRecycl
 
     @Override
     public StreamerViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view=layoutInflater.inflate(R.layout.recycler_list_selection,parent,false);
+        View view=layoutInflater.inflate(R.layout.stream_list_item,parent,false);
         return new StreamerViewHolder(view);
 
 
@@ -58,7 +58,7 @@ public class StreamerRecyclerAdapter extends RecyclerView.Adapter<StreamerRecycl
         public StreamerViewHolder(View view){
             super(view);
             view.setOnClickListener(this);
-            textView=(TextView)view.findViewById(R.id.recyclerSongName);
+            textView=(TextView)view.findViewById(R.id.streamText);
         }
 
         public void onClick(View view){
@@ -71,6 +71,7 @@ public class StreamerRecyclerAdapter extends RecyclerView.Adapter<StreamerRecycl
                 }
 
             }).start();
+
 
 
         }

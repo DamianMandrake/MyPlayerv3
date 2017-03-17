@@ -10,7 +10,10 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.damian.myplayerv3.AdaptersAndListeners.CustomAdapter;
+import com.damian.myplayerv3.AdaptersAndListeners.SearchQueryListener;
+import com.damian.myplayerv3.BackgroundTasks.SongListCompressBackTask;
 import com.damian.myplayerv3.MainActivity;
+import com.damian.myplayerv3.Playlist;
 import com.damian.myplayerv3.R;
 
 /**
@@ -69,8 +72,14 @@ public class NavigationFragment extends Fragment implements NavigationFragmentCo
         MainActivity.toast(NavigationFragmentConstants.options[i]);
         Fragment toSwap=this.fragmentSwapper.getFragment(i);
         if(!NavigationFragment.this.currentFragment.equals(toSwap) && toSwap!=null) {
-            if(toSwap instanceof AllSongsFragment)
+            if(toSwap instanceof AllSongsFragment) {
                 PlaylistFrag.setSongs.setMusicServiceList(MainActivity.songList);
+                SearchQueryListener.setListUnderConsideration(MainActivity.songList);
+                new SongListCompressBackTask((MainActivity)getActivity(),false).execute();
+
+            }else if(toSwap instanceof PlaylistFrag){
+
+            }
 
             this.fragmentSwapper.initOtherFrag(R.id.musicListFrag, toSwap);
             currentFragment=toSwap;

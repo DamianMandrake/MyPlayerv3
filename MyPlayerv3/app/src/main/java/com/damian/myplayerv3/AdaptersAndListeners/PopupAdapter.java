@@ -26,8 +26,11 @@ public class PopupAdapter extends RecyclerView.Adapter<PopupAdapter.PopupItemVie
 
     private ArrayList<Song> songArrayList;
     private LayoutInflater inflater;
+    //private boolean boo[];
     public PopupAdapter(Context ctx,ArrayList <Song>arrayList){
         this.songArrayList=arrayList;
+        //this.boo=new boolean[arrayList.size()];
+        //this.songArrayList.addAll(arrayList);
         this.inflater=LayoutInflater.from(ctx);
 
     }
@@ -40,19 +43,21 @@ public class PopupAdapter extends RecyclerView.Adapter<PopupAdapter.PopupItemVie
 
 
         holder.textView.setText(this.songArrayList.get(position).getTitle());
-        holder.view.setBackgroundColor(curr.getIsSelected() ? PopupItemViewHolder.checkedBg : PopupItemViewHolder.ogBg);
+        System.out.println("song "+curr.getTitle()+" IS "+curr.getIsSelected());
+        holder.view.setBackgroundColor(curr.getIsSelected()? PopupItemViewHolder.checkedBg : PopupItemViewHolder.ogBg);
         holder.view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                final boolean sel=!curr.getIsSelected();
+                boolean b= !curr.getIsSelected();
 
-                curr.setSelected(sel);
+                curr.setSelected(b);
                 int bg=PopupItemViewHolder.ogBg;
-                if(sel){
-                    PopupItemViewHolder.playlistArrayHandler.addElement(PopupItemViewHolder.playlistArrayHandler.getSong(position));
+                Song c=PopupAdapter.this.songArrayList.get(position);
+                if(b){
+                    PopupItemViewHolder.playlistArrayHandler.addElement(c);
                     bg=PopupItemViewHolder.checkedBg;
                 }else
-                    PopupItemViewHolder.playlistArrayHandler.removeSong(PopupItemViewHolder.playlistArrayHandler.getSong(position));
+                    PopupItemViewHolder.playlistArrayHandler.removeSong(c);
                 holder.view.setBackgroundColor(bg);
 
             }
@@ -112,6 +117,15 @@ public class PopupAdapter extends RecyclerView.Adapter<PopupAdapter.PopupItemVie
 
 
     }
+
+
+    public void setFilter(ArrayList<Song> arrayList){
+        this.songArrayList=new ArrayList<>();
+        this.songArrayList.addAll(arrayList);
+        this.notifyDataSetChanged();
+
+    }
+
     //overriding flipper
 
 

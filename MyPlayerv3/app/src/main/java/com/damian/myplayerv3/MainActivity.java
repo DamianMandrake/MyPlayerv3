@@ -30,6 +30,7 @@ import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.view.Gravity;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,6 +46,7 @@ import android.support.v7.widget.ListPopupWindow;
 
 import com.damian.myplayerv3.AdaptersAndListeners.CustomAdapter;
 import com.damian.myplayerv3.AdaptersAndListeners.FrameOnTouchListener;
+import com.damian.myplayerv3.AdaptersAndListeners.SearchQueryListener;
 import com.damian.myplayerv3.AdaptersAndListeners.SongRecycler;
 import com.damian.myplayerv3.Fragments.AllSongsFragment;
 import com.damian.myplayerv3.Fragments.MusicControllerFragment;
@@ -54,7 +56,10 @@ import com.damian.myplayerv3.Fragments.PopupDialogFrag;
 import com.damian.myplayerv3.Fragments.StreamerFragment;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class MainActivity extends AppCompatActivity implements MainActivityConstants,SongRecycler.GetFromList,FrameOnTouchListener.ToggleNavDrawerDrawable,NavigationFragment.FragmentSwapper,PlaylistFrag.SetSongs {
 
@@ -63,16 +68,31 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
     public static int MAX_TRANSLATION;
     public static int MAX_WINDOW_HEIGHT=0;
     public static int MAX_MUSIC_FRAME_SIZE=0;
+    public static MenuInflater menuInflater=null;
     static View coordinatorContent=null;
     public static Context context;
     public static File STORAGE_DIR,PLAYLIST_DIR;
     private int tempNotiId;
     public SearchView searchView;
+    public static  File DOWNLOADS_DIRECTORY;
+
+
     public void setStorageDir(File f){
         STORAGE_DIR=f;
 
         PLAYLIST_DIR=new File(MainActivity.STORAGE_DIR.getAbsolutePath()+"/playlists/");
         System.out.println(PLAYLIST_DIR.getAbsolutePath());
+        if(!PLAYLIST_DIR.exists())
+        PLAYLIST_DIR.mkdirs();
+        try {
+            DOWNLOADS_DIRECTORY = new File((Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getCanonicalPath() + "/audfm"));
+            if(!DOWNLOADS_DIRECTORY.exists())
+                DOWNLOADS_DIRECTORY.mkdirs();
+
+        }catch (IOException oi){
+            oi.printStackTrace();
+        }
+
 
 
 
@@ -107,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
     public static boolean isPlayerBound=false;
     private FrameLayout frameLayout,musicListFrame,navigationFrame;
     private DrawerLayout drawerLayout;
-    private android.support.v4.app.FragmentManager fragmentManager;
+    public static android.support.v4.app.FragmentManager fragmentManager;
     private android.support.v4.app.FragmentTransaction fragmentTransaction;
 
     private Class mHolder=MusicService.class;
@@ -116,7 +136,8 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
     public MenuItem menuItem;
 
     public static ArrayList<Song> songList=new ArrayList<>();
-    private ArrayList<Song> tempList=new ArrayList<>();
+    //public static LinkedHashMap<String,Song> songMap=new LinkedHashMap<>();
+    //private ArrayList<Song> tempList=new ArrayList<>();
     public TextView textView;
 
 
@@ -196,7 +217,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
     @Override
     protected void onStart(){
-        super.onStart();
+            super.onStart();
 
 
         if(musicPlayerIntent==null){
@@ -221,6 +242,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
 
 
         SongRecycler.SongViewHolder.setGetFromList(this);
+        menuInflater=getMenuInflater();
         setContentView(R.layout.activity_main);
         context=this;
         int p=this.getResources().getDisplayMetrics().heightPixels;
@@ -463,45 +485,20 @@ public class MainActivity extends AppCompatActivity implements MainActivityConst
         this.listPopupWindow.setDropDownGravity(Gravity.CENTER);
         this.listPopupWindow.setAnchorView(this.searchView);
 
-        this.listPopupWindow.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Song s = (MainActivity.this.tempList.get(i));
-                MainActivity.this.musicControllerFragment.play(s);
-                MainActivity.this.musicService.setSongPosition(MainActivity.songList.indexOf(s));
-                MainActivity.this.listPopupWindow.dismiss();
-            }
-        });
+
+        //todo--- item click of listPopup has been defined in SearchQueryListener
+
     }
 
 
 
     private void handleSearchViewCallbacks(){
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String s) {
-                return false;
-            }
 
-            @Override
-            public boolean onQueryTextChange(String s) {
-
-                MainActivity.this.tempList = new ArrayList<Song>();
-                for (Song so : MainActivity.songList)
-                    if (so.getTitle().toUpperCase().contains(s.toUpperCase()) || so.getArtist().toUpperCase().contains(s.toUpperCase()))
-                        MainActivity.this.tempList.add(so);
-
-
-                MainActivity.this.customAdapter.setFilter(MainActivity.this.tempList);
-                if (MainActivity.this.tempList.size() > 0)
-                    MainActivity.this.listPopupWindow.show();
-                else
-                    MainActivity.this.listPopupWindow.dismiss();
-
-
-                return true;
-            }
-        });
+        //todo set listener
+        //todo set a callback which will set search call back listener's arraylist and adapter
+        SearchQueryListener searchQueryListener =new SearchQueryListener(this.customAdapter,this.listPopupWindow,this.musicControllerFragment);
+        searchQueryListener.setListUnderConsideration(MainActivity.songList);
+        searchView.setOnQueryTextListener(searchQueryListener);
     }
 
     private void handleSearchViewUi(){
@@ -680,7 +677,6 @@ interface MainActivityConstants{
     static final File externalParentDir=new File(externalStoragePath);
     */
 
-    static final File DOWNLOADS_DIRECTORY=(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS));
 
     static float TRANSLATION_THRESHOLD_PERCENTAGE=0.125f;
     static float MUSIC_LIST_FRAME_PERCENT=0.78f;

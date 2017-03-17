@@ -6,18 +6,21 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.damian.myplayerv3.AdaptersAndListeners.RecyclerScrollListener;
+import com.damian.myplayerv3.AdaptersAndListeners.PlaylistRecyclerAdpater;
+import com.damian.myplayerv3.AdaptersAndListeners.SearchQueryListener;
 import com.damian.myplayerv3.AdaptersAndListeners.SongRecycler;
 import com.damian.myplayerv3.BackgroundTasks.PlaylistBackTask;
 import com.damian.myplayerv3.MainActivity;
 import com.damian.myplayerv3.Playlist;
-import com.damian.myplayerv3.AdaptersAndListeners.PlaylistRecyclerAdpater;
 import com.damian.myplayerv3.R;
 import com.damian.myplayerv3.Song;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -33,9 +36,11 @@ public class PlaylistFrag extends Fragment implements PlaylistRecyclerAdpater.Pl
     private RecyclerView recyclerView,songListRecyclerView;
     private PlaylistRecyclerAdpater playlistRecyclerAdpater;
     private PlaylistBackTask playlistBackTask;
-    private MainActivity activity;
+    //private MainActivity activity;
     public static SetSongs setSongs;
 
+
+    private Playlist contextPlaylist;//playlist item of recyclerView which generates the showContexVIew event;
     //todo set adapter to songListRecycler and set function to update adapter
 
 
@@ -61,6 +66,7 @@ public class PlaylistFrag extends Fragment implements PlaylistRecyclerAdpater.Pl
         PlaylistRecyclerAdpater.PlaylistViewHolder.setPlayListSetter(this);
 
         this.recyclerView=(RecyclerView)view.findViewById(R.id.playlistSongRecycler);
+        registerForContextMenu(this.recyclerView);
         this.songListRecyclerView=(RecyclerView)view.findViewById(R.id.playlistSongListRecycler);
         this.playlistBackTask=new PlaylistBackTask(this);
         this.playlistBackTask.execute();
@@ -93,6 +99,7 @@ public class PlaylistFrag extends Fragment implements PlaylistRecyclerAdpater.Pl
         this.playlistRef=playlists.get(position);
         ArrayList<Song> newList=this.playlistRef.getSongList();
         PlaylistFrag.setSongs.setMusicServiceList(newList);
+        SearchQueryListener.setListUnderConsideration(newList);
         this.songListRecyclerView.setAdapter(new SongRecycler(getContext(), newList));
         this.songListRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -105,16 +112,91 @@ public class PlaylistFrag extends Fragment implements PlaylistRecyclerAdpater.Pl
     public void setPlaylistArray(ArrayList<Playlist> arr){
         this.playlists=arr;
         //also initing the recycler
-        this.playlistRecyclerAdpater=new PlaylistRecyclerAdpater(getContext(),arr);
+        this.initRecycler();
+        System.out.println("recycler view initialized");
+    }
+
+    private void initRecycler(){
+        this.playlistRecyclerAdpater=new PlaylistRecyclerAdpater(getContext(),this.playlists);
         this.recyclerView.setAdapter(this.playlistRecyclerAdpater);
         LinearLayoutManager linearLayoutManager=new LinearLayoutManager(getContext(),LinearLayoutManager.HORIZONTAL,false);
         this.recyclerView.setLayoutManager(linearLayoutManager);
-        System.out.println("recycler view initialized");
     }
+
+    @Override
+    public void setTempPlaylist(int pos){
+     this.contextPlaylist=this.playlists.get(pos);
+
+    }
+
 
     public interface SetSongs {
         public void setMusicServiceList(ArrayList<Song> songs);
     }
+
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        System.out.println("inside context item seleced");
+            switch(item.getItemId()){
+                case R.id.edit_playlist:
+                    MainActivity.toast("add song to list");
+
+                    PopupDialogFrag.getInstance("Edit Playlist",this.contextPlaylist.getName(),this.contextPlaylist.getSongList()).show(MainActivity.fragmentManager,"editPlaylist");
+
+
+                    break;
+
+                case R.id.actionDeletePlaylist:
+                    //MainActivity.toast("remove playlist");
+                    this.deletePlaylist(this.contextPlaylist);
+                    break;
+
+                default:
+                    return super.onContextItemSelected(item);
+
+            }
+
+        return true;
+    }
+
+
+
+
+    private void deletePlaylist(Playlist playlist){
+        if(playlist!=this.playlistRef){
+            try {
+                File file = new File(MainActivity.PLAYLIST_DIR +"/"+ playlist.getName());
+                //f.delete();
+                //file=new File(MainActivity.STORAGE_DIR+"/"+playlist.getName());
+                boolean b=file.getCanonicalFile().delete();
+                System.out.println("could delete playlist file " + b);
+
+                if(!b)
+                    MainActivity.context.deleteFile(file.getCanonicalPath());
+
+
+                //todo remove playlist from arraylist and update recycler view
+                this.playlists.remove(playlist);
+                this.initRecycler();
+
+
+
+            }catch (IOException ioe){
+                ioe.printStackTrace();
+            }
+        }else{
+            MainActivity.toast("cant delete currently playing playlist");
+        }
+
+    }
+
+
+
+
+
+
+
 
 
 }

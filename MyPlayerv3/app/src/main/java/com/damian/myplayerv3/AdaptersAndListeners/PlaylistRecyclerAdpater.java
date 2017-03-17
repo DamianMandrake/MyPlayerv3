@@ -5,7 +5,10 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Build;
 import android.support.v7.widget.RecyclerView;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -61,7 +64,7 @@ public class PlaylistRecyclerAdpater extends RecyclerView.Adapter<PlaylistRecycl
         return this.playlists.size();
     }
 
-    public static class PlaylistViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener,View.OnLongClickListener{
+    public static class PlaylistViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener,View.OnLongClickListener,View.OnCreateContextMenuListener{
         TextView textView;
         ImageView imageView;
         View view;
@@ -75,6 +78,8 @@ public class PlaylistRecyclerAdpater extends RecyclerView.Adapter<PlaylistRecycl
             super(view);
             this.view=view;
             view.setOnClickListener(this);
+            view.setOnLongClickListener(this);
+            view.setOnCreateContextMenuListener(this);
             textView=(TextView)view.findViewById(R.id.playlistText);
             textView.setTextColor(Color.WHITE);
             imageView=(ImageView)view.findViewById(R.id.playlistImageView);
@@ -89,7 +94,7 @@ public class PlaylistRecyclerAdpater extends RecyclerView.Adapter<PlaylistRecycl
 
         @Override
         public void onClick(View view){
-            System.out.println("old pos"+PlaylistRecyclerAdpater.oldPos);
+            System.out.println("old pos" + PlaylistRecyclerAdpater.oldPos);
 
 
 
@@ -101,9 +106,21 @@ public class PlaylistRecyclerAdpater extends RecyclerView.Adapter<PlaylistRecycl
 
         @Override
         public boolean onLongClick(View view){
+            playListSetter.setTempPlaylist(getAdapterPosition());
+            view.showContextMenu();
 
 
+            System.out.println("in longclik");
             return true;
+        }
+
+
+        @Override
+        public void onCreateContextMenu(ContextMenu contextMenu,View view,ContextMenu.ContextMenuInfo menuInfo){
+
+            MenuInflater menuInflater= MainActivity.menuInflater;
+            menuInflater.inflate(R.menu.item_options,contextMenu);
+
         }
 
 
@@ -114,6 +131,7 @@ public class PlaylistRecyclerAdpater extends RecyclerView.Adapter<PlaylistRecycl
     public interface PlayListSetter
     {
         public void setPlaylistAndInitSongFragment(int i);
+        public void setTempPlaylist(int pos);
 
     }
 

@@ -1,20 +1,25 @@
 package com.damian.myplayerv3.BackgroundTasks;
 
+import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.widget.Toast;
 
 import com.damian.myplayerv3.Fragments.MusicControllerFragment;
+import com.damian.myplayerv3.Frequents.Keeper;
 import com.damian.myplayerv3.MainActivity;
 import com.damian.myplayerv3.Song;
 import com.damian.myplayerv3.StoreList;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.damian.myplayerv3.MainActivity;
 
@@ -28,7 +33,8 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
     private Context context;
     private MainActivity activity;
     private Handler handler;
-
+    private boolean showProgressDialog;
+    ProgressDialog progressDialog;
     private String notifyChangeInList="";
 
 
@@ -58,7 +64,7 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
 
 
 
-    public SongListCompressBackTask(MainActivity a){
+    public SongListCompressBackTask(MainActivity a,boolean showProgressDialog){
         songList=new ArrayList<Song>();
         activity=a;
         musicResolver=a.getContentResolver();
@@ -67,6 +73,14 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
         handler=new Handler();
         handler.postDelayed(run, 100);
 
+        if(this.showProgressDialog=showProgressDialog){
+            this.progressDialog=new ProgressDialog(MainActivity.context);
+            this.progressDialog.setCancelable(false);
+            this.progressDialog.setInverseBackgroundForced(false);
+            this.progressDialog.setMessage("Retrieving songs");
+        }
+
+        //new HandlerThread()
 
 
 
@@ -78,10 +92,11 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
     @Override
     protected void onPreExecute() {//spwans a ui thread from ui thread
         super.onPreExecute();
-        if(!MainActivity.resumeApp) {
-            activity.progressDialog.show();
-            activity.progressDialog.setMessage("Fetching songs");
+
+        if(this.showProgressDialog){
+            this.progressDialog.show();
         }
+
         System.out.println("in onPreExcecute");
     }
 
@@ -108,12 +123,12 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
             if (MainActivity.resumeApp) {//whenever async is called when the app resumes
 
 
-                if (MainActivity.songList.hashCode() != SongListCompressBackTask.this.songList.hashCode()) {
+                if ( !Keeper.getMd5(MainActivity.songList).equals((Keeper.getMd5(this.songList)))) {
                     writeListToStorage();
-                    System.out.println("HASHCODE OF MAINACTIVITY SONGLIST BEFORE IS " + MainActivity.songList.hashCode() + " AND OF THIS IS " + this.songList.hashCode());
+                    //System.out.println("HASHCODE OF MAINACTIVITY SONGLIST BEFORE IS " + + " AND OF THIS IS " + );
 
                     MainActivity.songList = this.songList;
-                    System.out.println("HASHCODE OF MAINACTIVITY SONGLIST IS " + MainActivity.songList.hashCode()+" AND OF THIS IS "+this.songList.hashCode());
+                    System.out.println("HASHCODE OF MAINACTIVITY SONGLIST IS " + Keeper.getMd5(MainActivity.songList)+" AND OF THIS IS "+ Keeper.getMd5(this.songList));
 
                     notifyChangeInList = "change in listOfSongs noticed";
                     System.out.println("CHANGE NOTICED ");
@@ -136,11 +151,12 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
     @Override
     protected void onPostExecute(Void aVoid) {//spawns a ui thread from ui thread
         inFetch=false;
-        if(!MainActivity.resumeApp)
-        handleRecyclerView();
+        if(this.showProgressDialog)
+        this.progressDialog.hide();
 
-        activity.progressDialog.hide();
-        activity.progressDialog=null;
+        //activity.progressDialog.hide();
+        //activity.progressDialog=null;
+
         Toast.makeText(context,songList.size()+" songs retrieved",Toast.LENGTH_SHORT).show();
         if(notifyChangeInList.length()!=0) {
             Toast.makeText(context, notifyChangeInList, Toast.LENGTH_SHORT).show();
@@ -173,18 +189,21 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
             int albumId=musicCursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ID);
             int albumName=musicCursor.getColumnIndex(MediaStore.Audio.AlbumColumns.ALBUM);
            // int year=musicCursor.getColumnIndex(MediaStore.Audio.Albums.FIRST_YEAR);
-            Cursor albumArtCursor;
+            Cursor albumArtCursor=null;
+
             do{
                 long tempId=musicCursor.getLong(idCol);
                 //System.out.println("year is "+y);
                 String t=musicCursor.getString(titleCol),a=musicCursor.getString(artistCol),ba=musicCursor.getString(albumId);
 
                 String alName=musicCursor.getString(albumName);
-
-                albumArtCursor=musicResolver.query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
-                        new String[]{MediaStore.Audio.Albums._ID,MediaStore.Audio.Albums.ALBUM_ART},
-                        MediaStore.Audio.Albums._ID +"=?",new String[]{ba},null);
-
+                try {
+                    albumArtCursor = musicResolver.query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
+                            new String[]{MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM_ART},
+                            MediaStore.Audio.Albums._ID + "=?", new String[]{ba}, null);
+                }catch (Exception e){
+                    continue;
+                }
 
                 String path=null;
                 try {
@@ -199,8 +218,11 @@ public class SongListCompressBackTask extends AsyncTask<Void,Void,Void> {
                 }catch (NullPointerException npe){
                     System.out.println("album art couldnt be parsed");
                 }
+                Song s=new Song(tempId, t, a, path);
 
-                songList.add(new Song(tempId, t, a, path));
+
+                songList.add(s);
+                //MainActivity.songMap.put(Keeper.getMd5(s),s);
 
 
 

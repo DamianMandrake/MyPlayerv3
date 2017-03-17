@@ -12,13 +12,14 @@ import com.damian.myplayerv3.R;
 import com.damian.myplayerv3.Song;
 
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
  * Created by damianmandrake on 2/18/17.
  */
-public class CustomAdapter extends BaseAdapter {
+public class CustomAdapter extends BaseAdapter implements FilterSongs {
 
     private ArrayList arrayList;
     private int resourceId;
@@ -98,12 +99,14 @@ public class CustomAdapter extends BaseAdapter {
         return row;
     }
 
+    @Override
     public void setFilter(ArrayList<Song> array){
         System.out.println("INSIDE SET FILTER");
         this.arrayList=new ArrayList<>();
         this.arrayList.addAll(array);
         this.notifyDataSetChanged();
     }
+
 
 
 

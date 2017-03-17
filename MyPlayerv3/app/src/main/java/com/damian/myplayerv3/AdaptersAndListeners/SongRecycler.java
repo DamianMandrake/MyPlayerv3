@@ -116,7 +116,7 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
         return songList.size();
     }
 
-    public void setPlaySongReference(PlaySong ref){
+    public static void setPlaySongReference(PlaySong ref){
         playSong=ref;
     }
 
@@ -168,6 +168,7 @@ public class SongRecycler extends RecyclerView.Adapter<SongRecycler.SongViewHold
     public interface PlaySong{
          public void play(int position);
          public void play(Song s );
+        public void setSongPosition(int position);
     }
 
 

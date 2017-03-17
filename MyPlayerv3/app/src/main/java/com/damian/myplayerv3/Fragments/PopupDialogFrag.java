@@ -9,6 +9,8 @@ import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +18,7 @@ import android.widget.EditText;
 
 import com.damian.myplayerv3.AdaptersAndListeners.PopupAdapter;
 import com.damian.myplayerv3.AdaptersAndListeners.SongRecycler;
+import com.damian.myplayerv3.Frequents.Keeper;
 import com.damian.myplayerv3.MainActivity;
 import com.damian.myplayerv3.Playlist;
 import com.damian.myplayerv3.R;
@@ -35,7 +38,8 @@ public class PopupDialogFrag extends DialogFragment implements PopupAdapter.Popu
     private static boolean isInEditMode;
     private RecyclerView recyclerView;//todo make a new adapter which has a textview and a checkbox to select songs
 
-    private ArrayList<Song> playlistSongList;
+    private static ArrayList<Song> playlistSongList;
+    //private static ArrayList<Song> tempList;
     public PopupDialogFrag(){
         //this is required by DialogFra base to instantiate this obj
         //to create your own obj of dialog frag use a static method which returns an instance of this class
@@ -46,6 +50,7 @@ public class PopupDialogFrag extends DialogFragment implements PopupAdapter.Popu
         Bundle bundle =new Bundle();
         bundle.putString("title", title);
         popupDialogFrag.setArguments(bundle);
+        PopupDialogFrag.playlistSongList=new ArrayList<>();
         System.out.println("leaving getInstace of dialog");
         PopupDialogFrag.isInEditMode=false;
 
@@ -53,11 +58,13 @@ public class PopupDialogFrag extends DialogFragment implements PopupAdapter.Popu
 
     }
     //for editing playlists
-    public static PopupDialogFrag getInstance(String title, ArrayList<Song> arrayList){
+    public static PopupDialogFrag getInstance(String title, String playlistName,ArrayList<Song> arrayList){
         PopupDialogFrag.isInEditMode=true;
         PopupDialogFrag popupDialogFrag=new PopupDialogFrag();
         Bundle bundle=new Bundle();
-        bundle.putString("title",title);
+        PopupDialogFrag.playlistSongList=arrayList;
+        bundle.putString("title", title);
+        bundle.putString("playlistName",playlistName);
         popupDialogFrag.setArguments(bundle);
         //todo add the arraylist to the bundle
 
@@ -101,8 +108,11 @@ public class PopupDialogFrag extends DialogFragment implements PopupAdapter.Popu
         AlertDialog.Builder alertDialog= new AlertDialog.Builder(getActivity());
         alertDialog.setTitle(getArguments().getString("title"));
 
+
         alertDialog.setView(view);
         initViews(view);
+        if(isInEditMode)
+            this.playlistName.setText(getArguments().getString("playlistName"));
 
         alertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
@@ -111,21 +121,16 @@ public class PopupDialogFrag extends DialogFragment implements PopupAdapter.Popu
                 //todo create and store playlist retreived from NEW recycleradapter
                 //need all playlist names.... will have to read it before hand
                 //todo add validations
-                String name=playlistName.getText().toString();
-                if(name.length()>0 && playlistSongList.size()>0)//&& notExists()
-                new Playlist(name,PopupDialogFrag.this.playlistSongList);
-                else
+                String name = playlistName.getText().toString();
+                if (name.length() > 0 && playlistSongList.size() > 0) {//&& notExists()
+                    //for(Song s:playlistSongList)
+                    //s.setSelected(false);
+                    new Playlist(name, PopupDialogFrag.playlistSongList);
+
+                } else
                     MainActivity.toast("Please enter a valid name or atleast 1 song in list");
 
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        for(Song s:MainActivity.songList){
-                            s.setSelected(false);
-                        }
-                    }
-                }).start();
-
+                PopupDialogFrag.this.cleanupMainList();
 
             }
 
@@ -133,9 +138,11 @@ public class PopupDialogFrag extends DialogFragment implements PopupAdapter.Popu
 
         alertDialog.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
             @Override
-            public void onClick(DialogInterface dialogInterface,int which){
+            public void onClick(DialogInterface dialogInterface, int which) {
                 MainActivity.toast("DISMISSING ");
                 dialogInterface.dismiss();
+               PopupDialogFrag.this.cleanupMainList();
+
             }
 
         });
@@ -151,9 +158,21 @@ public class PopupDialogFrag extends DialogFragment implements PopupAdapter.Popu
     }
 
 
+    private void cleanupMainList(){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                for(Song s:MainActivity.songList){
+                    s.setSelected(false);
+                }
+            }
+        }).start();
+
+    }
+
 
     private void initViews(View view){
-        this.playlistSongList=new ArrayList<>();
+        //this.playlistSongList=new ArrayList<>();
 
 
         this.playlistName=(EditText)view.findViewById(R.id.dialogPlaylistName);
@@ -161,10 +180,71 @@ public class PopupDialogFrag extends DialogFragment implements PopupAdapter.Popu
         this.searchField=(EditText)view.findViewById(R.id.dialogSearch);
         //todo set A NEW custom adapter
         this.recyclerView=(RecyclerView)view.findViewById(R.id.dialogRecyclerView);
-        PopupAdapter popupAdapter=new PopupAdapter(getContext(),MainActivity.songList);
+
+
+        if(PopupDialogFrag.isInEditMode){
+            System.out.println("setting seelcted songs... ");
+            for(Song s:PopupDialogFrag.playlistSongList){
+                System.out.println("curr song to be set is "+s.getTitle());
+                System.out.println("curr song is selected "+s.getIsSelected());
+                int i=0;
+                //using this method since java's hashcode function generates different values for the same object if theyre serialized
+                for( ;i<MainActivity.songList.size(); i++) {
+                    if(Keeper.getMd5(MainActivity.songList.get(i)).equals(Keeper.getMd5(s)))
+                        break;
+
+                }
+                Song sa=MainActivity.songList.get(i - 1);
+                System.out.println("TITLE "+sa.getTitle());
+                MainActivity.songList.get(i - 1).setSelected(true);
+
+            }
+        }
+
+        final PopupAdapter popupAdapter=new PopupAdapter(getContext(),MainActivity.songList);
+
+
         this.recyclerView.setAdapter(popupAdapter);
         this.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+
+
+        this.searchField.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                ArrayList<Song> tempList=new ArrayList<Song>();
+                for(Song s:MainActivity.songList){
+                    if(s.getArtist().toUpperCase().contains(charSequence.toString().toUpperCase()) || s.getTitle().toUpperCase().contains(charSequence.toString().toUpperCase()))
+                        tempList.add(s);
+
+                }
+
+
+
+
+
+
+                popupAdapter.setFilter(tempList);
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+            }
+        });
+
+
+
     }
+
+
+    //making hash kinda
+
 
 
 
@@ -172,12 +252,12 @@ public class PopupDialogFrag extends DialogFragment implements PopupAdapter.Popu
 
     @Override
     public void addElement(Song s){
-        this.playlistSongList.add(s);
+        PopupDialogFrag.playlistSongList.add(s);
         System.out.println("arr list size is "+this.playlistSongList.size());
     }
     @Override
     public boolean removeSong(Song s){
-        return this.playlistSongList.remove(s);
+        return PopupDialogFrag.playlistSongList.remove(s);
     }
     @Override
     public Song getSong(int pos){

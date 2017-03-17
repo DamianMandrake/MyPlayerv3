@@ -20,6 +20,8 @@ public class AudioFocusAdapter implements AudioManager.OnAudioFocusChangeListene
     public void onAudioFocusChange(int i) {
         System.out.println("Value of i is " + i);
         boolean b=true;
+        //for every value of i less than or qual to 0 audio focus is lost
+        //for every value >0 audio focus is gained
 
 
             this.musicService.pause();

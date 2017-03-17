@@ -198,6 +198,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
 
         view= view==null?inflater.inflate(R.layout.music_cotroller_frag, container, false):view;
 
+        SongRecycler.setPlaySongReference(this);
         System.out.println("is in oncReate");
         handler=new Handler();reloadStateHandler=new Handler();
 
@@ -287,6 +288,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
         System.out.println("************************** value of handle buttons is " + b);
         res= b?R.mipmap.play:R.mipmap.pause;
         playPause.setBackgroundResource(res);
+        if(musicService!=null)
         musicService.handleNotifButton(res);
 
         smallPlayPause.setBackgroundResource(res);
@@ -422,9 +424,10 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
                 SharedPreferences sharedPreferences = s;
                 Map t = sharedPreferences.getAll();
                 hasSavedStateBeenCalled = true;
-                songPos = ((Integer) t.get(CURR_SONG_POS_REF));
-                MusicControllerFragment.this.retrievedProgress = (Integer) t.get(SEEKBAR_POS);
+                songPos = sharedPreferences.getInt(CURR_SONG_POS_REF,0);
+                MusicControllerFragment.this.retrievedProgress = sharedPreferences.getInt(SEEKBAR_POS,0);
 
+                songPos= songPos>MainActivity.songList.size()?0:songPos;
                 this.play(songPos);
                 //prolly will have to seek
                 //musicService.seekTo(progress);//leads to illegal state hence need to do it in onPRepared state of mediaplayer
@@ -484,7 +487,7 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
         if(musicService!=null) {
 
         musicService.setSongPosition(p);
-        musicService.playSong();
+            musicService.playSong();
         handleButtons(false, false);
     }
 
@@ -502,6 +505,11 @@ public class MusicControllerFragment extends Fragment implements CompoundButton.
 
 
     }
+    @Override
+    public void setSongPosition(int i){
+        musicService.setSongPosition(i);
+    }
+
 
 
 
